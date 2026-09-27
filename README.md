@@ -2,7 +2,7 @@
 
 Origin-bound memory controls for AI agents. Preserve where a memory came from, keep its restrictions through summaries, and decide whether it may influence the current action.
 
-**Status: milestone 1 — executable security core and API.** This is a research foundation, not a production prompt-injection defense. No benchmark accuracy or novelty claims are made.
+**Status: milestones 1–2 — security core, LangGraph procurement workflow, and simulated payment gate.** This is a research foundation, not a production prompt-injection defense. No benchmark accuracy or novelty claims are made.
 
 ## What works
 
@@ -17,6 +17,19 @@ Origin-bound memory controls for AI agents. Preserve where a memory came from, k
 - Conservative descendant revocation, including invalidation of existing grants at retrieval time.
 - Atomic Neo4j persistence and an explicitly ephemeral in-memory development store.
 - Authenticated FastAPI API, OpenAPI explorer, poisoning example, security tests, and CI.
+- LangGraph observation, payment-planning, and execution workflows with persisted session-labelled traces.
+- Source summaries with adapter-bound lineage; an offline summarizer and an optional LangChain chat-model adapter.
+- Reviewer-registered suppliers and immutable invoices, exact-payment review, fresh execution-time permission checks, and idempotent simulated receipts.
+
+## Run the procurement workflow
+
+After installing the package below, run:
+
+```bash
+python examples/procurement.py
+```
+
+It demonstrates a cross-session poisoned account being blocked, an approval invalidated by later source revocation, a valid approved simulated payment, and a retry that creates no duplicate payment. It invokes real LangGraph nodes. The default summarizer is deterministic; no LLM or paid API call is made. See [the procurement API walkthrough](docs/procurement.md).
 
 ## Run the example first
 
@@ -136,9 +149,9 @@ A derived write supplies `parent_ids` instead of `source_id`. A grant supplies `
 
 ## Security boundary
 
-**This service decides which memories may enter an action's context. It does not authorize or execute the action itself.** A payment grant here does not approve an amount, invoice, or actual transfer. A real integration needs an independent tool authorization boundary and must recheck memory eligibility immediately before any consequential action.
+**A memory grant permits influence; it does not approve a transaction.** The procurement simulator now adds a separate reviewer approval for an exact invoice, amount, currency, account, and evidence record. Its tool gate rechecks both approvals, memory ancestry, conflicts, cancellation, and prior execution inside the same transaction as the simulated ledger write. No real transfer is made.
 
-The caller must report the real action and full lineage. A malicious agent can ask for informational context, omit parents, or bypass middleware; preventing that requires instrumented source adapters and tool execution controls, which are not implemented yet. Reviewer identity, adapter code, and database access are trusted. The Python engine is an internal library; the HTTP API is the credential boundary.
+The general-purpose memory API still depends on callers reporting the action and full lineage. The bundled observation adapter binds summary parents itself, and the simulator fixes the tool action to payment and derives its arguments from stored records. Asking for informational context cannot bypass the simulator's execution gate. Other agents and external tools need equivalent integration; real tool execution, network source authentication, and universal lineage capture are not implemented. Reviewer identity, adapter code, and database access are trusted. The Python engine is an internal library; the HTTP API is the credential boundary.
 
 Numeric authority describes the origin ceiling, not factual correctness or executable permission. Approval grants are separate, scoped records and never rewrite origin or remove taint. Higher authority is not sufficient for consequential retrieval.
 
@@ -152,10 +165,12 @@ The current store is single-workspace. Neo4j operations serialize on a workspace
 - Conflict keys come from the caller; there is no semantic extraction or independent corroboration. Both conflicting claims are quarantined. This is fail-closed but creates an availability tradeoff.
 - Revocation disables all descendants, even if they have other parents. Claim-level repair and independent-support verification are future work. Revocation is not physical deletion: records remain available to reviewers for auditing.
 - Content hashes bind approvals; they are not signatures and do not protect against a database administrator modifying records. Audit events have no public mutation API, but are not tamper-proof.
-- Grants permit memory influence until expiry; they are reusable and not transaction approval tokens.
-- No LangGraph adapter, model provider, embeddings, Next.js dashboard, MPBench adapter, LLM-filter baseline, or published evaluation results yet.
+- Memory grants permit influence until expiry; they are reusable and not transaction approval tokens. Simulator transaction approvals are separate and single-execution per invoice.
+- The LangGraph workflow is a fixed procurement workflow, not an open-ended autonomous planner. The optional chat-model adapter is dependency-injected; no hosted provider is configured or evaluated.
+- Session IDs label runs; they are not identity or tenant boundaries. Business records persist in Neo4j, while graph invocations have no checkpoint/replay service. A crashed observation can leave a root without a summary; repeating observation may create duplicate informational records. Payment retries remain idempotent.
+- No embeddings, Next.js dashboard, MPBench adapter, LLM-filter baseline, or published evaluation results yet.
 
-Next: instrument a LangGraph procurement simulator and tool-boundary checks, then add semantic retrieval, a security dashboard, and reproducible benchmark comparisons. Verify benchmark availability and licenses before importing datasets.
+Next: add semantic retrieval, a security dashboard, and reproducible benchmark comparisons. Verify benchmark availability and licenses before importing datasets. Extending the simulated gate to a real payment provider requires a separate durable outbox and provider idempotency design; a database transaction cannot atomically commit an external bank transfer.
 
 See [architecture and threat model](docs/architecture.md) for the invariants and acceptance cases.
 
@@ -167,6 +182,6 @@ python -m ruff format --check .
 python -m pytest -q
 ```
 
-The Neo4j integration test is skipped unless `NEO4J_TEST_URI` and `NEO4J_TEST_PASSWORD` are set. It uses a random namespace and cleans up only that namespace. GitHub Actions provisions Neo4j and runs it alongside the unit and API tests.
+The Neo4j integration tests are skipped unless `NEO4J_TEST_URI` and `NEO4J_TEST_PASSWORD` are set. They use random namespaces and clean up only those namespaces. They cover core persistence and the agent/review/payment lifecycle across reconnects, including concurrent execution and revoked evidence. GitHub Actions provisions Neo4j and runs them alongside the unit and API tests and both examples.
 
 Implementation references: [FastAPI security](https://fastapi.tiangolo.com/reference/security/), [FastAPI tests](https://fastapi.tiangolo.com/tutorial/testing/), [Neo4j managed transactions](https://neo4j.com/docs/python-manual/current/transactions/).

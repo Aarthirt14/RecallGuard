@@ -11,10 +11,24 @@ from typing import TypeVar
 from neo4j import GraphDatabase
 
 from recallguard.models import AuditEvent, Grant, Memory, Source
+from recallguard.procurement_models import (
+    AgentRun,
+    Invoice,
+    PaymentProposal,
+    SimulatedReceipt,
+    Supplier,
+)
 from recallguard.store import State
 
 T = TypeVar("T")
 MODELS = {"sources": Source, "memories": Memory, "grants": Grant, "events": AuditEvent}
+MODELS.update(
+    suppliers=Supplier,
+    invoices=Invoice,
+    payments=PaymentProposal,
+    receipts=SimulatedReceipt,
+    runs=AgentRun,
+)
 
 
 class Neo4jStore:

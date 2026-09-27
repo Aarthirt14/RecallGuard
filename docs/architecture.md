@@ -1,4 +1,4 @@
-# Milestone 1: origin-bound memory controls
+# Security architecture: memory core and procurement integration
 
 ## Data flow
 
@@ -16,7 +16,7 @@ flowchart TD
   Q --> V[Reviewer inspection]
 ```
 
-The API never performs a payment. All examples are local simulations. A future tool adapter must enforce the action gate separately from model-generated text.
+The API never performs a real payment. The procurement integration records simulated payments through a separate execution gate. It does not treat model-generated text or a memory grant as transaction approval. See [procurement integration](procurement.md).
 
 ## Invariants
 
@@ -47,7 +47,7 @@ Origin ceilings: external web/email/file = 1; tool = 2; user information = 3; sy
 
 In scope: external content attempting to gain action authority through persistence and declared derivations; API callers spoofing server-owned fields; agents accessing reviewer operations; inherited quarantine; stale grants after revocation; conflicting structured claims; loss of atomicity.
 
-Out of scope in this milestone: compromised reviewer credentials or database, malicious code in the trusted adapter, omitted/false lineage, a caller lying about its action, model instructions carried inside otherwise permitted informational data, exfiltration via a bypassing tool, cross-tenant isolation, resource exhaustion, and factual validation of arbitrary prose. These are integration requirements, not problems a regex or numeric trust score solves.
+Out of scope: compromised reviewer credentials or database, malicious code in the trusted adapter, omitted/false lineage in generic memory API calls, a generic caller lying about its action, model instructions carried inside otherwise permitted informational data, exfiltration via an unintegrated tool, cross-tenant isolation, resource exhaustion, and factual validation of arbitrary prose. The bundled simulator addresses its own action boundary by hard-coding the payment action and deriving arguments from persisted records; it does not protect arbitrary external tools.
 
 ## Storage
 
@@ -71,8 +71,8 @@ All operations currently serialize per workspace and load all workspace records,
 
 ## Roadmap
 
-1. **This milestone:** deterministic core, credential boundary, persistent records, tests, runnable poisoning example.
-2. **Agent integration:** LangGraph source adapters with mandatory lineage, provider interface, tool-time eligibility rechecks, simulated procurement actions.
+1. **Implemented:** deterministic core, credential boundary, persistent records, tests, runnable poisoning example.
+2. **Implemented:** LangGraph observation adapter with mandatory summary lineage, optional chat-model summarizer, tool-time eligibility rechecks, exact transaction review, and simulated procurement actions. Hosted-model evaluation and real network adapters remain future work.
 3. **Retrieval and review:** embeddings, indexed Neo4j retrieval, human review UI, explicit conflict resolution, no silent promotions.
 4. **Repair and evaluation:** independently supported claim reconstruction, benchmark adapter, naive and LLM-filter baselines, utility/security metrics with confidence intervals.
 

@@ -95,6 +95,23 @@ def blocked_reasons(state: State, memory: Memory) -> list[str]:
     return reasons
 
 
+def action_blocked_reasons(
+    state: State, memory: Memory, action: Action, target: str | None
+) -> list[str]:
+    """Shared by retrieval and the tool gate; no cached permission decisions."""
+    reasons = blocked_reasons(state, memory)
+    if action != Action.INFORM and not any(
+        g.memory_id == memory.id
+        and g.memory_hash == memory.content_hash
+        and g.action == action
+        and g.target == target
+        and g.expires_at > now()
+        for g in state.grants.values()
+    ):
+        reasons.append("scoped_approval_required")
+    return reasons
+
+
 class RecallGuard:
     def __init__(self, store: Store):
         self.store = store
@@ -224,19 +241,7 @@ class RecallGuard:
             candidates.sort(key=lambda pair: (-pair[0], pair[1].id))
             allowed, blocked = [], []
             for _, memory in candidates:
-                reasons = blocked_reasons(state, memory)
-                if data.action != Action.INFORM:
-                    grants = [
-                        g
-                        for g in state.grants.values()
-                        if g.memory_id == memory.id
-                        and g.memory_hash == memory.content_hash
-                        and g.action == data.action
-                        and g.target == data.target
-                        and g.expires_at > now()
-                    ]
-                    if not grants:
-                        reasons.append("scoped_approval_required")
+                reasons = action_blocked_reasons(state, memory, data.action, data.target)
                 if reasons:
                     blocked.append(BlockedMemory(memory_id=memory.id, reasons=reasons))
                 else:

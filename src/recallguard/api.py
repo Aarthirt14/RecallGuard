@@ -10,6 +10,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.security import APIKeyHeader
 
+from recallguard.agent import ProcurementAgent
 from recallguard.engine import GuardError, RecallGuard
 from recallguard.models import (
     Grant,
@@ -23,6 +24,19 @@ from recallguard.models import (
     Role,
     Source,
     SourceInput,
+)
+from recallguard.procurement import Procurement
+from recallguard.procurement_models import (
+    AgentRun,
+    ExecutePaymentInput,
+    Invoice,
+    InvoiceInput,
+    ObserveInput,
+    PaymentApprovalInput,
+    PaymentProposal,
+    PlanPaymentInput,
+    Supplier,
+    SupplierInput,
 )
 from recallguard.store import InMemoryStore, Store
 
@@ -72,6 +86,7 @@ def create_app(settings: Settings | None = None, store: Store | None = None) -> 
                 raise ValueError("NEO4J_PASSWORD is required for persistent storage")
             selected = Neo4jStore(settings.neo4j_uri, settings.neo4j_user, settings.neo4j_password)
         app.state.guard = RecallGuard(selected)
+        app.state.procurement = Procurement(selected)
         try:
             yield
         finally:
@@ -79,7 +94,7 @@ def create_app(settings: Settings | None = None, store: Store | None = None) -> 
 
     app = FastAPI(
         title="RecallGuard",
-        version="0.1.0",
+        version="0.2.0",
         lifespan=lifespan,
         description="Origin-bound memory controls. This API does not execute external actions.",
     )
@@ -148,5 +163,49 @@ def create_app(settings: Settings | None = None, store: Store | None = None) -> 
     @app.get("/audit")
     def events(actor: Actor):
         return list(app.state.guard.inspect(actor).events.values())
+
+    @app.post("/procurement/suppliers", response_model=Supplier, status_code=201)
+    def supplier(data: SupplierInput, actor: Actor):
+        return app.state.procurement.register_supplier(data, actor)
+
+    @app.post("/procurement/invoices", response_model=Invoice, status_code=201)
+    def invoice(data: InvoiceInput, actor: Actor):
+        return app.state.procurement.register_invoice(data, actor)
+
+    @app.post("/procurement/invoices/{invoice_id}/cancel", response_model=Invoice)
+    def cancel_invoice(invoice_id: str, data: RevokeInput, actor: Actor):
+        return app.state.procurement.cancel_invoice(invoice_id, data.reason, actor)
+
+    @app.post("/agent/observe", response_model=AgentRun)
+    def observe(data: ObserveInput, actor: Actor):
+        return ProcurementAgent(app.state.guard, actor).observe(data)
+
+    @app.post("/agent/plan-payment", response_model=AgentRun)
+    def plan_payment(data: PlanPaymentInput, actor: Actor):
+        return ProcurementAgent(app.state.guard, actor).plan_payment(data)
+
+    @app.get("/procurement/payments/{proposal_id}", response_model=PaymentProposal)
+    def payment(proposal_id: str, actor: Actor):
+        return app.state.procurement.proposal(proposal_id)
+
+    @app.post("/procurement/payments/{proposal_id}/approve", response_model=PaymentProposal)
+    def approve_payment(proposal_id: str, data: PaymentApprovalInput, actor: Actor):
+        return app.state.procurement.approve(proposal_id, data, actor)
+
+    @app.post("/procurement/payments/{proposal_id}/cancel", response_model=PaymentProposal)
+    def cancel_payment(proposal_id: str, data: RevokeInput, actor: Actor):
+        return app.state.procurement.cancel_payment(proposal_id, data.reason, actor)
+
+    @app.post("/procurement/payments/{proposal_id}/execute", response_model=AgentRun)
+    def execute_payment(proposal_id: str, data: ExecutePaymentInput, actor: Actor):
+        return ProcurementAgent(app.state.guard, actor).execute_payment(proposal_id, data)
+
+    @app.get("/agent/runs", response_model=list[AgentRun])
+    def runs(actor: Actor):
+        return list(app.state.guard.inspect(actor).runs.values())
+
+    @app.get("/procurement/receipts")
+    def receipts(actor: Actor):
+        return list(app.state.guard.inspect(actor).receipts.values())
 
     return app
