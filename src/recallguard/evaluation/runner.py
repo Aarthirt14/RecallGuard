@@ -13,13 +13,24 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from recallguard.embeddings import Encoder, encode_checked
-from recallguard.engine import CREDENTIAL, INSTRUCTION, GuardError, RecallGuard
+from recallguard.engine import GuardError, RecallGuard
 from recallguard.evaluation.schema import Case, Dataset, GrantScope, Revoke, Write
 from recallguard.models import GrantInput, MemoryInput, Principal, Role, now
+from recallguard.screening import POLICY_VERSION
 from recallguard.store import InMemoryStore
 
 METHODS = ("unfiltered", "text_filter", "recallguard")
 MAX_DATASET_BYTES = 4 * 1024 * 1024
+# Freeze the v0.5 text-only ablation so strengthening production policy does not
+# silently move the comparison baseline. It deliberately scans only raw content.
+INSTRUCTION = re.compile(
+    r"\b(ignore|bypass|disable|override)\b|\b(always|never|must)\b|"
+    r"\b(send|transfer|pay)\b.{0,100}\b(account|money|funds)\b",
+    re.I | re.S,
+)
+CREDENTIAL = re.compile(
+    r"\b(password|api[_ -]?key|secret[_ -]?key|access[_ -]?token)\s*[:=]\s*\S+", re.I
+)
 
 
 class EvaluationError(Exception):
@@ -240,6 +251,8 @@ def evaluate(dataset: Dataset, encoder: Encoder | None = None) -> dict:
             "model_id": cached.model_id if cached else None,
             "tie_breaking": "stable-case-memory-id",
             "storage": "isolated-in-memory",
+            "text_filter_policy": "frozen-v0.5-raw-content",
+            "screening_policy": POLICY_VERSION,
             "llm_invoked": False,
             "external_actions_executed": False,
         },
@@ -249,6 +262,9 @@ def evaluate(dataset: Dataset, encoder: Encoder | None = None) -> dict:
                 Path(__file__).parents[1].joinpath("engine.py").read_bytes()
             ).hexdigest(),
             "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            "screening_sha256": hashlib.sha256(
+                Path(__file__).parents[1].joinpath("screening.py").read_bytes()
+            ).hexdigest(),
         },
         "limitations": [
             "Measures context exposure and retention, not agent attack success "

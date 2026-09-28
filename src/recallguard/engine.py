@@ -24,6 +24,7 @@ from recallguard.models import (
     Status,
     now,
 )
+from recallguard.screening import screen_memory
 from recallguard.store import State, Store
 
 
@@ -43,14 +44,6 @@ AUTHORITY = {
     SourceType.SYSTEM: 5,
 }
 EXTERNAL = {SourceType.WEB, SourceType.EMAIL, SourceType.FILE}
-INSTRUCTION = re.compile(
-    r"\b(ignore|bypass|disable|override)\b|\b(always|never|must)\b|"
-    r"\b(send|transfer|pay)\b.{0,100}\b(account|money|funds)\b",
-    re.I | re.S,
-)
-CREDENTIAL = re.compile(
-    r"\b(password|api[_ -]?key|secret[_ -]?key|access[_ -]?token)\s*[:=]\s*\S+", re.I
-)
 
 
 def require_reviewer(actor: Principal) -> None:
@@ -89,8 +82,17 @@ def blocked_reasons(state: State, memory: Memory) -> list[str]:
     reasons = []
     if memory.status != Status.ACTIVE:
         reasons.append(f"memory_{memory.status}")
-    if any(p.status != Status.ACTIVE for p in ancestors(state, memory)):
+    lineage = ancestors(state, memory)
+    if any(p.status != Status.ACTIVE for p in lineage):
         reasons.append("inactive_ancestor")
+    # Re-evaluate persisted records under the current policy. Updating the code
+    # must protect old active records, existing descendants and prior grants too.
+    screening = screen_memory(memory.content, memory.claim)
+    reasons.extend(f"content_policy:{signal}" for signal in screening.instruction_signals)
+    if screening.credential:
+        reasons.append("content_policy:credential")
+    if any(screen_memory(p.content, p.claim).blocked for p in lineage):
+        reasons.append("ancestor_content_policy")
     if memory.conflict_ids:
         reasons.append("unresolved_conflict")
     return reasons
@@ -140,7 +142,8 @@ class RecallGuard:
         return self.store.transact(operation)
 
     def remember(self, data: MemoryInput, actor: Principal) -> Memory:
-        if CREDENTIAL.search(data.content):
+        screening = screen_memory(data.content, data.claim)
+        if screening.credential:
             raise GuardError("Potential credential detected; memory was not stored", 422)
         vector = self._encode([data.content])[0] if self.encoder else None
 
@@ -166,10 +169,11 @@ class RecallGuard:
                 origin_ids = [source.id]
                 if source.kind in EXTERNAL:
                     taints.add("untrusted_external")
-            is_instruction = bool(INSTRUCTION.search(data.content))
+            is_instruction = bool(screening.instruction_signals)
             if is_instruction:
                 taints.add("contains_instruction")
                 reasons.append("instruction_requires_review")
+                reasons.extend(f"content_policy:{s}" for s in screening.instruction_signals)
             if "contains_instruction" in taints:
                 reasons.append("instruction_taint")
             memory_type = (

@@ -1,7 +1,7 @@
 name: Security core
 on:
   push:
-    branches: [main, "feat/**"]
+    branches: [main, "feat/**", "fix/**"]
   pull_request:
 permissions:
   contents: read
@@ -36,6 +36,7 @@ jobs:
       - run: python examples/poisoning.py
       - run: python examples/procurement.py
       - run: python -m recallguard.evaluation --output evaluation-output/lexical.json --markdown evaluation-output/lexical.md
+      - run: python -m recallguard.evaluation --dataset src/recallguard/evaluation/hardening.json --output evaluation-output/hardening-lexical.json --markdown evaluation-output/hardening-lexical.md
       - uses: actions/upload-artifact@v4
         with:
           name: lexical-evaluation
@@ -57,6 +58,7 @@ jobs:
           RECALLGUARD_TEST_MODEL: "1"
           RECALLGUARD_EMBEDDING_CACHE: /home/runner/.cache/recallguard-models
       - run: python -m recallguard.evaluation --mode semantic --offline --model-cache /home/runner/.cache/recallguard-models --output evaluation-output/semantic.json --markdown evaluation-output/semantic.md
+      - run: python -m recallguard.evaluation --dataset src/recallguard/evaluation/hardening.json --mode semantic --offline --model-cache /home/runner/.cache/recallguard-models --output evaluation-output/hardening-semantic.json --markdown evaluation-output/hardening-semantic.md
       - uses: actions/upload-artifact@v4
         with:
           name: semantic-evaluation

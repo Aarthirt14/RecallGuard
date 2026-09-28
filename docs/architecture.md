@@ -31,6 +31,8 @@ The API never performs a real payment. The procurement integration records simul
 9. The allowed result limit is applied after policy filtering; blocked candidates cannot crowd all useful context out of a small top-k window.
 10. Semantic vectors are bound to content hashes and exact model identities. Similarity never grants permission; stale, missing, or incompatible vectors are excluded.
 11. Record changes and audit events commit together. A failed operation rolls back.
+12. Current content screening applies to text, structured claim fields, and ancestors at retrieval, grant, and tool-gate time, including records accepted by earlier versions.
+13. The observation adapter checks current restrictions before calling a summarizer; restricted input produces a blocked run without a summary. Derived output passes the write firewall again.
 
 ## Core types
 
@@ -49,7 +51,7 @@ Origin ceilings: external web/email/file = 1; tool = 2; user information = 3; sy
 
 In scope: external content attempting to gain action authority through persistence and declared derivations; API callers spoofing server-owned fields; agents accessing reviewer operations; inherited quarantine; stale grants after revocation; conflicting structured claims; loss of atomicity.
 
-Out of scope: compromised reviewer credentials or database, malicious code in the trusted adapter, omitted/false lineage in generic memory API calls, a generic caller lying about its action, model instructions carried inside otherwise permitted informational data, exfiltration via an unintegrated tool, cross-tenant isolation, resource exhaustion, and factual validation of arbitrary prose. The bundled simulator addresses its own action boundary by hard-coding the payment action and deriving arguments from persisted records; it does not protect arbitrary external tools.
+Out of scope: compromised reviewer credentials or database, malicious code in the trusted adapter, omitted/false lineage in generic memory API calls, a generic caller lying about its action, undetected model instructions carried inside otherwise permitted informational data, exfiltration via an unintegrated tool, cross-tenant isolation, resource exhaustion, and factual validation of arbitrary prose. The bundled simulator addresses its own action boundary by hard-coding the payment action and deriving arguments from persisted records; it does not protect arbitrary external tools.
 
 ## Storage
 
