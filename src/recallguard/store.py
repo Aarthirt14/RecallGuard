@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from threading import RLock
 from typing import Protocol, TypeVar
 
+from recallguard.embeddings import EmbeddingRecord
 from recallguard.models import AuditEvent, Grant, Memory, Source
 from recallguard.procurement_models import (
     AgentRun,
@@ -29,6 +30,7 @@ class State:
     payments: dict[str, PaymentProposal] = field(default_factory=dict)
     receipts: dict[str, SimulatedReceipt] = field(default_factory=dict)
     runs: dict[str, AgentRun] = field(default_factory=dict)
+    embeddings: dict[str, EmbeddingRecord] = field(default_factory=dict)
 
 
 class Store(Protocol):

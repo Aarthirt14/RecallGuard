@@ -2,7 +2,7 @@
 
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -143,6 +143,8 @@ class RetrievalInput(Model):
     action: Action = Action.INFORM
     target: Identifier | None = None
     limit: int = Field(default=10, ge=1, le=100)
+    mode: Literal["lexical", "semantic"] | None = None
+    min_score: float = Field(default=0.25, ge=-1, le=1, allow_inf_nan=False)
 
     @model_validator(mode="after")
     def action_needs_target(self):
@@ -161,6 +163,14 @@ class RetrievalResult(Model):
     blocked: list[BlockedMemory]
     action: Action
     target: str | None
+    mode: str = "lexical"
+    model_id: str | None = None
+    scores: dict[str, float] = Field(default_factory=dict)
+    unindexed_count: int = 0
+
+
+class ReindexInput(Model):
+    limit: int = Field(default=32, ge=1, le=256)
 
 
 class RevokeInput(Model):

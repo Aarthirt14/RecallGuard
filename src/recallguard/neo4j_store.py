@@ -10,6 +10,7 @@ from typing import TypeVar
 
 from neo4j import GraphDatabase
 
+from recallguard.embeddings import EmbeddingRecord
 from recallguard.models import AuditEvent, Grant, Memory, Source
 from recallguard.procurement_models import (
     AgentRun,
@@ -28,6 +29,7 @@ MODELS.update(
     payments=PaymentProposal,
     receipts=SimulatedReceipt,
     runs=AgentRun,
+    embeddings=EmbeddingRecord,
 )
 
 

@@ -29,7 +29,8 @@ The API never performs a real payment. The procurement integration records simul
 7. Every consequential retrieval requires an unexpired exact-memory, content-hash, action, and target grant. Authority alone cannot authorize it.
 8. Grants never propagate across summaries. Quarantine and revocation override grants.
 9. The allowed result limit is applied after policy filtering; blocked candidates cannot crowd all useful context out of a small top-k window.
-10. Record changes and audit events commit together. A failed operation rolls back.
+10. Semantic vectors are bound to content hashes and exact model identities. Similarity never grants permission; stale, missing, or incompatible vectors are excluded.
+11. Record changes and audit events commit together. A failed operation rolls back.
 
 ## Core types
 
@@ -39,6 +40,7 @@ The API never performs a real payment. The procurement integration records simul
 | Memory | Immutable content and lineage; mutable restrictive lifecycle metadata |
 | Claim | Caller-supplied entity, attribute, value for exact conflict checks |
 | Grant | Reviewer permission for a particular memory to influence an action and target |
+| EmbeddingRecord | Server-owned normalized vector bound to a memory content hash and model identity |
 | AuditEvent | Actor, event type, subject IDs, reason, UTC timestamp |
 
 Origin ceilings: external web/email/file = 1; tool = 2; user information = 3; system = 5. These numbers do not estimate truthfulness. Explicit authorization is represented by a grant, not by changing a memory's score to 4.
@@ -73,7 +75,7 @@ All operations currently serialize per workspace and load all workspace records,
 
 1. **Implemented:** deterministic core, credential boundary, persistent records, tests, runnable poisoning example.
 2. **Implemented:** LangGraph observation adapter with mandatory summary lineage, optional chat-model summarizer, tool-time eligibility rechecks, exact transaction review, and simulated procurement actions. Hosted-model evaluation and real network adapters remain future work.
-3. **Retrieval and review:** embeddings, indexed Neo4j retrieval, human review UI, explicit conflict resolution, no silent promotions.
+3. **Partly implemented:** local embeddings, exact cosine retrieval, and reviewer-only backfill. See [semantic retrieval](semantic-retrieval.md). Indexed Neo4j retrieval, a human review UI, and explicit conflict resolution remain future work; no silent promotions.
 4. **Repair and evaluation:** independently supported claim reconstruction, benchmark adapter, naive and LLM-filter baselines, utility/security metrics with confidence intervals.
 
 Do not call test fixture outcomes an attack-success benchmark. A passing deterministic test proves only the specified invariant for those inputs.

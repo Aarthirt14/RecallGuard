@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "recallguard"
-version = "0.2.0"
+version = "0.3.0"
 description = "Origin-bound memory security for AI agents"
 requires-python = ">=3.12"
 dependencies = [
@@ -17,6 +17,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest==9.1.1", "httpx==0.28.1", "ruff==0.16.9"]
+semantic = ["fastembed==0.8.1"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -24,7 +25,10 @@ where = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
-markers = ["integration: requires a running Neo4j database"]
+markers = [
+  "integration: requires a running Neo4j database",
+  "model: requires the optional embedding model and RECALLGUARD_TEST_MODEL=1",
+]
 
 [tool.ruff]
 target-version = "py312"

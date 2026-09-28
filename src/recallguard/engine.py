@@ -4,6 +4,7 @@ import hashlib
 import re
 from datetime import timedelta
 
+from recallguard.embeddings import EmbeddingError, Encoder, encode_checked, find_record, make_record
 from recallguard.models import (
     Action,
     AuditEvent,
@@ -113,8 +114,17 @@ def action_blocked_reasons(
 
 
 class RecallGuard:
-    def __init__(self, store: Store):
+    def __init__(self, store: Store, encoder: Encoder | None = None):
         self.store = store
+        self.encoder = encoder
+
+    def _encode(self, texts: list[str]) -> list[list[float]]:
+        if self.encoder is None:
+            raise GuardError("Semantic retrieval is not configured", 503)
+        try:
+            return encode_checked(self.encoder, texts)
+        except EmbeddingError:
+            raise GuardError("Embedding generation failed; no changes were saved", 503) from None
 
     def register_source(self, data: SourceInput, actor: Principal) -> Source:
         require_reviewer(actor)
@@ -130,6 +140,10 @@ class RecallGuard:
         return self.store.transact(operation)
 
     def remember(self, data: MemoryInput, actor: Principal) -> Memory:
+        if CREDENTIAL.search(data.content):
+            raise GuardError("Potential credential detected; memory was not stored", 422)
+        vector = self._encode([data.content])[0] if self.encoder else None
+
         def operation(state):
             parents = [get_memory(state, mid) for mid in data.parent_ids]
             reasons = []
@@ -152,9 +166,6 @@ class RecallGuard:
                 origin_ids = [source.id]
                 if source.kind in EXTERNAL:
                     taints.add("untrusted_external")
-            if CREDENTIAL.search(data.content):
-                # Do not persist or return secrets, even in quarantine.
-                raise GuardError("Potential credential detected; memory was not stored", 422)
             is_instruction = bool(INSTRUCTION.search(data.content))
             if is_instruction:
                 taints.add("contains_instruction")
@@ -197,6 +208,9 @@ class RecallGuard:
                             item.reasons = sorted(set(item.reasons) | {"conflicting_claim"})
                         audit(state, actor, "conflict_detected", [other.id, memory.id])
             state.memories[memory.id] = memory
+            if vector is not None:
+                record = make_record(memory, self.encoder, vector)
+                state.embeddings[record.id] = record
             audit(state, actor, "memory_written", [memory.id], decision=memory.status)
             return memory
 
@@ -229,28 +243,52 @@ class RecallGuard:
         return self.store.transact(operation)
 
     def retrieve(self, data: RetrievalInput, actor: Principal) -> RetrievalResult:
+        mode = data.mode or ("semantic" if self.encoder else "lexical")
+        query_vector = self._encode([data.query])[0] if mode == "semantic" else None
+
         def operation(state):
-            # Lexical candidate search for milestone 1. Security checks do not depend
-            # on the retriever, and happen before the allowed-result limit is applied.
             tokens = set(re.findall(r"\w+", data.query.casefold()))
             candidates = []
+            unindexed = 0
             for memory in state.memories.values():
-                score = len(tokens & set(re.findall(r"\w+", memory.content.casefold())))
-                if score:
-                    candidates.append((score, memory))
+                if query_vector is not None:
+                    record = find_record(state.embeddings, memory, self.encoder)
+                    if record is None:
+                        unindexed += memory.status != Status.REVOKED
+                        continue
+                    score = max(
+                        -1.0,
+                        min(
+                            1.0,
+                            sum(a * b for a, b in zip(query_vector, record.vector, strict=True)),
+                        ),
+                    )
+                    if score < data.min_score:
+                        continue
+                else:
+                    score = len(tokens & set(re.findall(r"\w+", memory.content.casefold())))
+                    if not score:
+                        continue
+                candidates.append((score, memory))
             candidates.sort(key=lambda pair: (-pair[0], pair[1].id))
-            allowed, blocked = [], []
-            for _, memory in candidates:
+            allowed, blocked, scores = [], [], {}
+            # Live policy filtering precedes top-k, including when vectors predate a revoke.
+            for score, memory in candidates:
                 reasons = action_blocked_reasons(state, memory, data.action, data.target)
                 if reasons:
                     blocked.append(BlockedMemory(memory_id=memory.id, reasons=reasons))
-                else:
+                elif len(allowed) < data.limit:
                     allowed.append(memory)
+                    scores[memory.id] = score
             result = RetrievalResult(
-                allowed=allowed[: data.limit],
+                allowed=allowed,
                 blocked=blocked[:100],
                 action=data.action,
                 target=data.target,
+                mode=mode,
+                model_id=self.encoder.model_id if mode == "semantic" else None,
+                scores=scores,
+                unindexed_count=unindexed,
             )
             audit(
                 state,
@@ -261,8 +299,72 @@ class RecallGuard:
                 target=data.target,
                 allowed_count=len(result.allowed),
                 blocked_count=len(blocked),
+                mode=mode,
+                model_id=result.model_id,
+                unindexed_count=unindexed,
             )
             return result
+
+        return self.store.transact(operation)
+
+    def _missing_embeddings(self, state):
+        return [
+            m
+            for m in state.memories.values()
+            if m.status != Status.REVOKED and find_record(state.embeddings, m, self.encoder) is None
+        ]
+
+    def embedding_status(self, actor: Principal) -> dict:
+        require_reviewer(actor)
+        if self.encoder is None:
+            raise GuardError("Semantic retrieval is not configured", 503)
+
+        def operation(state):
+            eligible = sum(m.status != Status.REVOKED for m in state.memories.values())
+            missing = len(self._missing_embeddings(state))
+            return {
+                "model_id": self.encoder.model_id,
+                "dimensions": self.encoder.dimensions,
+                "eligible": eligible,
+                "indexed": eligible - missing,
+                "remaining": missing,
+            }
+
+        return self.store.transact(operation)
+
+    def reindex(self, limit: int, actor: Principal) -> dict:
+        require_reviewer(actor)
+        if self.encoder is None:
+            raise GuardError("Semantic retrieval is not configured", 503)
+        if not 1 <= limit <= 256:
+            raise GuardError("Reindex limit must be between 1 and 256", 422)
+        pending = self.store.transact(
+            lambda state: sorted(self._missing_embeddings(state), key=lambda m: m.id)[:limit]
+        )
+        # Model inference is outside transaction callbacks (which Neo4j may retry).
+        vectors = self._encode([m.content for m in pending]) if pending else []
+
+        def operation(state):
+            written = []
+            for snapshot, vector in zip(pending, vectors, strict=True):
+                current = state.memories.get(snapshot.id)
+                if (
+                    current is None
+                    or current.status == Status.REVOKED
+                    or current.content_hash != snapshot.content_hash
+                    or find_record(state.embeddings, current, self.encoder) is not None
+                ):
+                    continue
+                record = make_record(current, self.encoder, vector)
+                state.embeddings[record.id] = record
+                written.append(current.id)
+            if written:
+                audit(state, actor, "embeddings_indexed", written, model_id=self.encoder.model_id)
+            return {
+                "model_id": self.encoder.model_id,
+                "indexed": len(written),
+                "remaining": len(self._missing_embeddings(state)),
+            }
 
         return self.store.transact(operation)
 

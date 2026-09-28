@@ -2,7 +2,7 @@
 
 Origin-bound memory controls for AI agents. Preserve where a memory came from, keep its restrictions through summaries, and decide whether it may influence the current action.
 
-**Status: milestones 1–2 — security core, LangGraph procurement workflow, and simulated payment gate.** This is a research foundation, not a production prompt-injection defense. No benchmark accuracy or novelty claims are made.
+**Status: security core, LangGraph procurement workflow, simulated payment gate, and local semantic retrieval implemented.** This is a research foundation, not a production prompt-injection defense. No benchmark accuracy or novelty claims are made.
 
 ## What works
 
@@ -17,9 +17,14 @@ Origin-bound memory controls for AI agents. Preserve where a memory came from, k
 - Conservative descendant revocation, including invalidation of existing grants at retrieval time.
 - Atomic Neo4j persistence and an explicitly ephemeral in-memory development store.
 - Authenticated FastAPI API, OpenAPI explorer, poisoning example, security tests, and CI.
+- Optional local MiniLM semantic retrieval, versioned content-bound vectors, reviewer backfill, and exact cosine ranking with live policy checks.
 - LangGraph observation, payment-planning, and execution workflows with persisted session-labelled traces.
 - Source summaries with adapter-bound lineage; an offline summarizer and an optional LangChain chat-model adapter.
 - Reviewer-registered suppliers and immutable invoices, exact-payment review, fresh execution-time permission checks, and idempotent simulated receipts.
+
+## Enable semantic retrieval
+
+See [semantic retrieval setup](docs/semantic-retrieval.md) for the optional `.[semantic]` installation, Docker override, existing-memory backfill, and real-model smoke test. The default remains lexical. Semantic mode runs locally and uses the same security policy.
 
 ## Run the procurement workflow
 
@@ -117,6 +122,7 @@ All protected requests use `X-API-Key`.
 | `POST /sources` | Reviewer | Register immutable source identity |
 | `POST /memories` | Agent or reviewer | Ingest a root or derive a memory |
 | `POST /retrieve` | Agent or reviewer | Retrieve context for a declared action |
+| `GET /embeddings/status`, `POST /embeddings/reindex` | Reviewer | Inspect coverage and backfill the configured embedding model |
 | `POST /grants` | Reviewer | Approve a specific memory/action/target until expiry |
 | `POST /memories/{id}/revoke` | Reviewer | Revoke a root and every descendant |
 | `GET /memories`, `/graph`, `/audit` | Reviewer | Inspect the security state |
@@ -159,7 +165,7 @@ The current store is single-workspace. Neo4j operations serialize on a workspace
 
 ## Limitations and next milestones
 
-- Retrieval is lexical token overlap, **not embeddings or semantic search**.
+- Semantic retrieval uses an exact full-workspace cosine scan, not an indexed vector database. Similarity thresholds are not calibrated confidence scores. See [retrieval limitations](docs/semantic-retrieval.md).
 - Instruction detection uses English patterns; it misses obfuscation and multilingual payloads and may quarantine harmless imperative text. No detector accuracy is claimed.
 - Credential detection is a limited pattern check, not comprehensive secret scanning.
 - Conflict keys come from the caller; there is no semantic extraction or independent corroboration. Both conflicting claims are quarantined. This is fail-closed but creates an availability tradeoff.
@@ -168,9 +174,9 @@ The current store is single-workspace. Neo4j operations serialize on a workspace
 - Memory grants permit influence until expiry; they are reusable and not transaction approval tokens. Simulator transaction approvals are separate and single-execution per invoice.
 - The LangGraph workflow is a fixed procurement workflow, not an open-ended autonomous planner. The optional chat-model adapter is dependency-injected; no hosted provider is configured or evaluated.
 - Session IDs label runs; they are not identity or tenant boundaries. Business records persist in Neo4j, while graph invocations have no checkpoint/replay service. A crashed observation can leave a root without a summary; repeating observation may create duplicate informational records. Payment retries remain idempotent.
-- No embeddings, Next.js dashboard, MPBench adapter, LLM-filter baseline, or published evaluation results yet.
+- No Next.js dashboard, MPBench adapter, LLM-filter baseline, or published evaluation results yet.
 
-Next: add semantic retrieval, a security dashboard, and reproducible benchmark comparisons. Verify benchmark availability and licenses before importing datasets. Extending the simulated gate to a real payment provider requires a separate durable outbox and provider idempotency design; a database transaction cannot atomically commit an external bank transfer.
+Next: add a security dashboard, indexed candidate retrieval, and reproducible benchmark comparisons. Verify benchmark availability and licenses before importing datasets. Extending the simulated gate to a real payment provider requires a separate durable outbox and provider idempotency design; a database transaction cannot atomically commit an external bank transfer.
 
 See [architecture and threat model](docs/architecture.md) for the invariants and acceptance cases.
 
@@ -182,6 +188,6 @@ python -m ruff format --check .
 python -m pytest -q
 ```
 
-The Neo4j integration tests are skipped unless `NEO4J_TEST_URI` and `NEO4J_TEST_PASSWORD` are set. They use random namespaces and clean up only those namespaces. They cover core persistence and the agent/review/payment lifecycle across reconnects, including concurrent execution and revoked evidence. GitHub Actions provisions Neo4j and runs them alongside the unit and API tests and both examples.
+The Neo4j integration tests are skipped unless `NEO4J_TEST_URI` and `NEO4J_TEST_PASSWORD` are set. They use random namespaces and clean up only those namespaces. They cover core persistence and the agent/review/payment lifecycle across reconnects, including concurrent execution and revoked evidence. GitHub Actions provisions Neo4j and runs them alongside the unit and API tests and both examples. A separate job runs the optional real-model smoke test.
 
 Implementation references: [FastAPI security](https://fastapi.tiangolo.com/reference/security/), [FastAPI tests](https://fastapi.tiangolo.com/tutorial/testing/), [Neo4j managed transactions](https://neo4j.com/docs/python-manual/current/transactions/).
