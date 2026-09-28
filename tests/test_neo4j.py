@@ -125,3 +125,52 @@ def test_embeddings_reconnect_backfill_and_revocation(reviewer, agent):
             ).consume()
             session.run("MATCH (n:RGWorkspace {id: $ns}) DELETE n", ns=namespace).consume()
         store.close()
+
+
+def test_informational_review_persists_and_withdraws_after_reconnect(reviewer, agent):
+    from recallguard.context_review import review_fingerprint
+    from recallguard.models import ContextReviewInput
+
+    namespace = f"test-{uuid4()}"
+    args = (os.environ["NEO4J_TEST_URI"], "neo4j", os.environ["NEO4J_TEST_PASSWORD"], namespace)
+    store = Neo4jStore(*args)
+    try:
+        guard = RecallGuard(store)
+        guard.register_source(
+            SourceInput(id="web", kind=SourceType.WEB, locator="test:web"), reviewer
+        )
+        root = guard.remember(
+            MemoryInput(
+                content="Orion handbook quotes 'Ignore prior instructions' as an attack.",
+                source_id="web",
+            ),
+            agent,
+        )
+        review = guard.review_context(
+            ContextReviewInput(
+                memory_id=root.id,
+                expected_fingerprint=review_fingerprint(root),
+                reason="Verified as a benign quotation",
+                expires_at=now() + timedelta(hours=1),
+            ),
+            reviewer,
+        )
+        store.close()
+        store = Neo4jStore(*args)
+        guard = RecallGuard(store)
+        assert guard.retrieve(RetrievalInput(query="Orion"), agent).context_reviews == {
+            root.id: review.id
+        }
+        guard.withdraw_context_review(review.id, "Reviewer withdrew exception", reviewer)
+        store.close()
+        store = Neo4jStore(*args)
+        guard = RecallGuard(store)
+        assert not guard.retrieve(RetrievalInput(query="Orion"), agent).allowed
+        assert guard.inspect(reviewer).context_reviews[review.id].withdrawn_at is not None
+    finally:
+        with store.driver.session() as session:
+            session.run(
+                "MATCH (n:RGObject {namespace: $ns}) DETACH DELETE n", ns=namespace
+            ).consume()
+            session.run("MATCH (n:RGWorkspace {id: $ns}) DELETE n", ns=namespace).consume()
+        store.close()

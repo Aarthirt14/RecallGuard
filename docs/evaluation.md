@@ -55,7 +55,7 @@ Each method sees the same raw corpus and query. Baselines retain raw writes even
 
 All methods use the same lexical scores or cached, validated semantic vectors. The evaluator requests all eligible results from the bounded case (at most 64 records), then applies the case's top-k after policy filtering with deterministic case-ID tie breaking. Production retrieval uses UUID tie breaking, so this is a membership comparison, not an exact production ranking trace. No latency or memory-usage claim is made; caching and store overhead would make such a comparison misleading.
 
-Reports include a canonical normalized dataset hash, engine, screening, and runner source hashes, package version, retrieval mode, model identity, and a result hash. Random runtime IDs and timestamps are excluded. The result hash is computed over the report before adding the hash itself. Repeated lexical runs with the same software and dataset produce identical JSON bytes; semantic reproducibility also depends on model/runtime identity and numerical behavior.
+Reports include a canonical normalized dataset hash, engine, screening, informational-review, and runner source hashes, package version, retrieval mode, model identity, and a result hash. Random runtime IDs and timestamps are excluded. The result hash is computed over the report before adding the hash itself. Repeated lexical runs with the same software and dataset produce identical JSON bytes; semantic reproducibility also depends on model/runtime identity and numerical behavior.
 
 A fresh RecallGuard instance represents another session over the same in-memory store. This is not a process-restart or Neo4j durability test; the separate integration suite covers persistent storage.
 
@@ -86,6 +86,8 @@ The remaining original lexical failure is the paraphrased delivery question. Bot
 The additional [hardening.json](../src/recallguard/evaluation/hardening.json) dataset covers persistent preferences, role spoofing, overrides, financial redirection, exfiltration, tool commands, answer manipulation, concealment, encoded wrappers, malicious claim fields, and benign obligations/descriptions. These cases were developed alongside the rules and are **not held out**. An explicit Orion query marker and semantic threshold -1 force candidate coverage: this suite tests admission, not retrieval quality. Its 19 security cases all preserve a useful neighboring record while withholding the payload; all eight utility cases pass.
 
 Two intentional limitation cases fail in both modes: a declarative false account claim is admitted informationally, and a benign security-handbook quotation is overblocked. Thus expanded-suite forbidden exposure is 1/20, and required-context recall is 27/28. The false claim still requires independent scoped approval before payment influence. There is no blanket safe-context guarantee.
+
+Version 0.7 adds an explicit human informational-review workflow, tested separately through the engine, API, dashboard, and Neo4j persistence checks. Neither dataset automatically creates reviews, and their default admission outcomes remain unchanged. A manual exception is not counted as a detector improvement. The v0.6 reports remain historical artifacts.
 
 Run the additional cases with:
 

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "recallguard"
-version = "0.6.0"
+version = "0.7.0"
 description = "Origin-bound memory security for AI agents"
 requires-python = ">=3.12"
 dependencies = [
