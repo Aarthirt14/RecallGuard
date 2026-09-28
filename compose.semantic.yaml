@@ -1,0 +1,15 @@
+# Opt in: docker compose -f compose.yaml -f compose.semantic.yaml up --build
+services:
+  api:
+    build:
+      args:
+        INSTALL_TARGET: ".[semantic]"
+    environment:
+      RECALLGUARD_RETRIEVAL_MODE: semantic
+      RECALLGUARD_EMBEDDING_CACHE: /home/recallguard/.cache/fastembed
+    volumes:
+      - embedding-cache:/home/recallguard/.cache/fastembed
+    healthcheck:
+      start_period: 180s
+volumes:
+  embedding-cache:

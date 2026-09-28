@@ -85,3 +85,43 @@ def test_persistence_lineage_and_transaction_rollback(reviewer, agent):
             ).consume()
             session.run("MATCH (n:RGWorkspace {id: $ns}) DELETE n", ns=namespace).consume()
         store.close()
+
+
+def test_embeddings_reconnect_backfill_and_revocation(reviewer, agent):
+    class Encoder:
+        model_id = "persistence-test-v1"
+        dimensions = 2
+
+        def encode(self, texts):
+            return [[1.0, 0.0] for _ in texts]
+
+    namespace = f"test-{uuid4()}"
+    args = (os.environ["NEO4J_TEST_URI"], "neo4j", os.environ["NEO4J_TEST_PASSWORD"], namespace)
+    store = Neo4jStore(*args)
+    try:
+        guard = RecallGuard(store)
+        guard.register_source(
+            SourceInput(id="web", kind=SourceType.WEB, locator="test:web"), reviewer
+        )
+        old = guard.remember(MemoryInput(content="Legacy shipment", source_id="web"), agent)
+        guard.encoder = Encoder()
+        new = guard.remember(MemoryInput(content="New shipment", source_id="web"), agent)
+        assert guard.reindex(32, reviewer)["indexed"] == 1
+        before = guard.inspect(reviewer)
+        assert len(before.embeddings) == 2
+        store.close()
+        store = Neo4jStore(*args)
+        guard = RecallGuard(store, Encoder())
+        assert guard.inspect(reviewer).embeddings == before.embeddings
+        query = RetrievalInput(query="parcel arrival")
+        assert {m.id for m in guard.retrieve(query, agent).allowed} == {old.id, new.id}
+        guard.revoke(old.id, "invalidated source", reviewer)
+        assert [m.id for m in guard.retrieve(query, agent).allowed] == [new.id]
+        assert guard.embedding_status(reviewer)["indexed"] == 1
+    finally:
+        with store.driver.session() as session:
+            session.run(
+                "MATCH (n:RGObject {namespace: $ns}) DETACH DELETE n", ns=namespace
+            ).consume()
+            session.run("MATCH (n:RGWorkspace {id: $ns}) DELETE n", ns=namespace).consume()
+        store.close()

@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from fastapi.security import APIKeyHeader
 
 from recallguard.agent import ProcurementAgent
+from recallguard.embeddings import Encoder, LocalMiniLMEncoder
 from recallguard.engine import GuardError, RecallGuard
 from recallguard.models import (
     Grant,
@@ -18,6 +19,7 @@ from recallguard.models import (
     Memory,
     MemoryInput,
     Principal,
+    ReindexInput,
     RetrievalInput,
     RetrievalResult,
     RevokeInput,
@@ -49,6 +51,10 @@ class Settings:
     neo4j_uri: str = "bolt://localhost:7687"
     neo4j_user: str = "neo4j"
     neo4j_password: str = ""
+    retrieval_mode: str = "lexical"
+    embedding_cache: str | None = None
+    embedding_offline: bool = False
+    embedding_model_path: str | None = None
 
     def __post_init__(self):
         if min(len(self.agent_key), len(self.reviewer_key)) < 32:
@@ -57,6 +63,8 @@ class Settings:
             raise ValueError("Agent and reviewer keys must be different")
         if self.backend not in {"memory", "neo4j"}:
             raise ValueError("RECALLGUARD_BACKEND must be memory or neo4j")
+        if self.retrieval_mode not in {"lexical", "semantic"}:
+            raise ValueError("RECALLGUARD_RETRIEVAL_MODE must be lexical or semantic")
 
     @classmethod
     def from_env(cls):
@@ -67,14 +75,27 @@ class Settings:
             neo4j_uri=os.getenv("NEO4J_URI", "bolt://localhost:7687"),
             neo4j_user=os.getenv("NEO4J_USER", "neo4j"),
             neo4j_password=os.getenv("NEO4J_PASSWORD", ""),
+            retrieval_mode=os.getenv("RECALLGUARD_RETRIEVAL_MODE", "lexical"),
+            embedding_cache=os.getenv("RECALLGUARD_EMBEDDING_CACHE"),
+            embedding_offline=os.getenv("RECALLGUARD_EMBEDDING_OFFLINE", "0") == "1",
+            embedding_model_path=os.getenv("RECALLGUARD_EMBEDDING_MODEL_PATH"),
         )
 
 
-def create_app(settings: Settings | None = None, store: Store | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None, store: Store | None = None, encoder: Encoder | None = None
+) -> FastAPI:
     settings = settings or Settings.from_env()
 
     @asynccontextmanager
     async def lifespan(app):
+        selected_encoder = encoder
+        if selected_encoder is None and settings.retrieval_mode == "semantic":
+            selected_encoder = LocalMiniLMEncoder(
+                cache_dir=settings.embedding_cache,
+                local_files_only=settings.embedding_offline,
+                model_path=settings.embedding_model_path,
+            )
         if store is not None:
             selected = store
         elif settings.backend == "memory":
@@ -85,7 +106,7 @@ def create_app(settings: Settings | None = None, store: Store | None = None) -> 
             if not settings.neo4j_password:
                 raise ValueError("NEO4J_PASSWORD is required for persistent storage")
             selected = Neo4jStore(settings.neo4j_uri, settings.neo4j_user, settings.neo4j_password)
-        app.state.guard = RecallGuard(selected)
+        app.state.guard = RecallGuard(selected, selected_encoder)
         app.state.procurement = Procurement(selected)
         try:
             yield
@@ -94,7 +115,7 @@ def create_app(settings: Settings | None = None, store: Store | None = None) -> 
 
     app = FastAPI(
         title="RecallGuard",
-        version="0.2.0",
+        version="0.3.0",
         lifespan=lifespan,
         description="Origin-bound memory controls. This API does not execute external actions.",
     )
@@ -133,6 +154,14 @@ def create_app(settings: Settings | None = None, store: Store | None = None) -> 
     @app.post("/grants", response_model=Grant, status_code=201)
     def grant(data: GrantInput, actor: Actor):
         return app.state.guard.grant(data, actor)
+
+    @app.get("/embeddings/status")
+    def embedding_status(actor: Actor):
+        return app.state.guard.embedding_status(actor)
+
+    @app.post("/embeddings/reindex")
+    def reindex(data: ReindexInput, actor: Actor):
+        return app.state.guard.reindex(data.limit, actor)
 
     @app.post("/memories/{memory_id}/revoke")
     def revoke(memory_id: str, data: RevokeInput, actor: Actor):
