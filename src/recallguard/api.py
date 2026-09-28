@@ -4,11 +4,13 @@ import os
 import secrets
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.security import APIKeyHeader
+from fastapi.staticfiles import StaticFiles
 
 from recallguard.agent import ProcurementAgent
 from recallguard.embeddings import Encoder, LocalMiniLMEncoder
@@ -40,6 +42,7 @@ from recallguard.procurement_models import (
     Supplier,
     SupplierInput,
 )
+from recallguard.review import review_snapshot
 from recallguard.store import InMemoryStore, Store
 
 
@@ -115,7 +118,7 @@ def create_app(
 
     app = FastAPI(
         title="RecallGuard",
-        version="0.3.0",
+        version="0.4.0",
         lifespan=lifespan,
         description="Origin-bound memory controls. This API does not execute external actions.",
     )
@@ -129,6 +132,37 @@ def create_app(
         raise HTTPException(status_code=401, detail="Valid API credentials are required")
 
     Actor = Annotated[Principal, Depends(principal)]
+
+    @app.middleware("http")
+    async def security_headers(request, call_next):
+        response = await call_next(request)
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        if request.url.path.startswith("/dashboard"):
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; script-src 'self'; style-src 'self'; "
+                "img-src 'self'; connect-src 'self'; object-src 'none'; "
+                "base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
+            )
+            response.headers["X-Frame-Options"] = "DENY"
+        return response
+
+    dashboard = Path(__file__).with_name("dashboard")
+    app.mount("/dashboard/assets", StaticFiles(directory=dashboard), name="dashboard-assets")
+
+    @app.get("/", include_in_schema=False)
+    def home():
+        return RedirectResponse("/dashboard")
+
+    @app.get("/dashboard", include_in_schema=False)
+    @app.get("/dashboard/", include_in_schema=False)
+    def dashboard_page():
+        return FileResponse(dashboard / "index.html")
+
+    @app.get("/review")
+    def review(actor: Actor):
+        return review_snapshot(app.state.guard, actor, settings.backend)
 
     @app.exception_handler(GuardError)
     async def guard_error_handler(request, exc):

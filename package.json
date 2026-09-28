@@ -1,0 +1,13 @@
+{
+  "name": "recallguard-dashboard-checks",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/dashboard.test.mjs",
+    "format:check": "prettier --check 'src/recallguard/dashboard/*.{html,css,js}' tests/dashboard.test.mjs",
+    "format": "prettier --write 'src/recallguard/dashboard/*.{html,css,js}' tests/dashboard.test.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "26.1.0",
+    "prettier": "3.8.1"
+  }
+}
