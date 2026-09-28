@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "recallguard"
-version = "0.4.0"
+version = "0.5.0"
 description = "Origin-bound memory security for AI agents"
 requires-python = ">=3.12"
 dependencies = [
@@ -19,11 +19,15 @@ dependencies = [
 dev = ["pytest==9.1.1", "httpx==0.28.1", "ruff==0.16.9"]
 semantic = ["fastembed==0.8.1"]
 
+[project.scripts]
+recallguard-eval = "recallguard.evaluation.__main__:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
 recallguard = ["dashboard/*.html", "dashboard/*.css", "dashboard/*.js", "dashboard/*.svg"]
+"recallguard.evaluation" = ["cases.json"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

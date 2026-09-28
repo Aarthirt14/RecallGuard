@@ -35,6 +35,11 @@ jobs:
           NEO4J_TEST_PASSWORD: ci-only-recallguard-password
       - run: python examples/poisoning.py
       - run: python examples/procurement.py
+      - run: python -m recallguard.evaluation --output evaluation-output/lexical.json --markdown evaluation-output/lexical.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lexical-evaluation
+          path: evaluation-output/
   embedding-model:
     runs-on: ubuntu-latest
     steps:
@@ -51,6 +56,11 @@ jobs:
         env:
           RECALLGUARD_TEST_MODEL: "1"
           RECALLGUARD_EMBEDDING_CACHE: /home/runner/.cache/recallguard-models
+      - run: python -m recallguard.evaluation --mode semantic --offline --model-cache /home/runner/.cache/recallguard-models --output evaluation-output/semantic.json --markdown evaluation-output/semantic.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: semantic-evaluation
+          path: evaluation-output/
   dashboard:
     runs-on: ubuntu-latest
     steps:

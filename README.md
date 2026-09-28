@@ -2,7 +2,7 @@
 
 Origin-bound memory controls for AI agents. Preserve where a memory came from, keep its restrictions through summaries, and decide whether it may influence the current action.
 
-**Status: security core, LangGraph procurement workflow, simulated payment gate, local semantic retrieval, and reviewer dashboard implemented.** This is a research foundation, not a production prompt-injection defense. No benchmark accuracy or novelty claims are made.
+**Status: security core, LangGraph procurement workflow, simulated payment gate, local semantic retrieval, reviewer dashboard, and offline evaluation runner implemented.** This is a research foundation, not a production prompt-injection defense. No benchmark accuracy or novelty claims are made.
 
 ## What works
 
@@ -22,6 +22,14 @@ Origin-bound memory controls for AI agents. Preserve where a memory came from, k
 - LangGraph observation, payment-planning, and execution workflows with persisted session-labelled traces.
 - Source summaries with adapter-bound lineage; an offline summarizer and an optional LangChain chat-model adapter.
 - Reviewer-registered suppliers and immutable invoices, exact-payment review, fresh execution-time permission checks, and idempotent simulated receipts.
+
+## Run the evaluation
+
+```bash
+python -m recallguard.evaluation --output evaluation/results/lexical.json --markdown evaluation/results/lexical.md
+```
+
+This compares unfiltered retrieval, a text-only filter, and RecallGuard on 19 handwritten scenarios. It reports useful-context retention and forbidden-context exposure, including known failures. These are not agent attack-success or MPBench results. See [evaluation methodology](docs/evaluation.md).
 
 ## Open the reviewer dashboard
 
@@ -181,9 +189,9 @@ The current store is single-workspace. Neo4j operations serialize on a workspace
 - The LangGraph workflow is a fixed procurement workflow, not an open-ended autonomous planner. The optional chat-model adapter is dependency-injected; no hosted provider is configured or evaluated.
 - Session IDs label runs; they are not identity or tenant boundaries. Business records persist in Neo4j, while graph invocations have no checkpoint/replay service. A crashed observation can leave a root without a summary; repeating observation may create duplicate informational records. Payment retries remain idempotent.
 - The dashboard is plain JavaScript served by FastAPI, not Next.js. It has no individual reviewer accounts, conflict-resolution workflow, or server-side pagination.
-- No MPBench adapter, LLM-filter baseline, or published evaluation results yet.
+- The offline evaluation uses original synthetic fixtures and minimal retrieval ablations. No MPBench adapter, hosted LLM-filter baseline, or published benchmark results yet.
 
-Next: add indexed candidate retrieval and reproducible benchmark comparisons; extend review with explicit conflict resolution. Verify benchmark availability and licenses before importing datasets. Extending the simulated gate to a real payment provider requires a separate durable outbox and provider idempotency design; a database transaction cannot atomically commit an external bank transfer.
+Next: add indexed candidate retrieval, a justified external-benchmark adapter, and explicit conflict resolution. The offline runner now provides reproducible context-level comparisons. Verify benchmark availability and licenses before importing datasets. Extending the simulated gate to a real payment provider requires a separate durable outbox and provider idempotency design; a database transaction cannot atomically commit an external bank transfer.
 
 See [architecture and threat model](docs/architecture.md) for the invariants and acceptance cases.
 
