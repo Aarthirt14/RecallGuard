@@ -52,6 +52,7 @@ class PaymentTerms(Model):
     bank_account: Account
     memory_id: str
     memory_hash: str
+    claim_verification_id: str | None = None
 
 
 class PaymentProposal(Model):

@@ -15,6 +15,8 @@ from recallguard.models import (
     Action,
     AuditEvent,
     BlockedMemory,
+    ClaimVerification,
+    ClaimVerificationInput,
     ContextReview,
     ContextReviewInput,
     Grant,
@@ -34,6 +36,9 @@ from recallguard.models import (
 )
 from recallguard.screening import screen_memory
 from recallguard.store import State, Store
+from recallguard.verification import current_verification, valid_verification, verification_blockers
+from recallguard.verification import record_fingerprint as verification_record_fingerprint
+from recallguard.verification import request_fingerprint as verification_request_fingerprint
 
 
 class GuardError(Exception):
@@ -108,22 +113,46 @@ def blocked_reasons(state: State, memory: Memory) -> list[str]:
 
 def action_decision(
     state: State, memory: Memory, action: Action, target: str | None
-) -> tuple[list[str], ContextReview | None]:
+) -> tuple[list[str], ContextReview | None, ClaimVerification | None]:
     """Return one live decision and the exact review used for that decision."""
     reasons = blocked_reasons(state, memory)
+    verification = (
+        current_verification(state, memory, blocked_reasons)
+        if action == Action.INFORM and memory.claim
+        else None
+    )
     review = current_review(state, memory) if action == Action.INFORM else None
     if review is not None:
-        return [], review
-    if action != Action.INFORM and not any(
-        g.memory_id == memory.id
-        and g.memory_hash == memory.content_hash
-        and g.action == action
-        and g.target == target
-        and g.expires_at > now()
-        for g in state.grants.values()
-    ):
-        reasons.append("scoped_approval_required")
-    return reasons, None
+        return [], review, verification
+    if action != Action.INFORM:
+        grants = [
+            g
+            for g in state.grants.values()
+            if g.memory_id == memory.id
+            and g.memory_hash == memory.content_hash
+            and g.action == action
+            and g.target == target
+            and g.expires_at > now()
+        ]
+        if not grants:
+            reasons.append("scoped_approval_required")
+        if memory.claim:
+            verification = next(
+                (
+                    v
+                    for g in grants
+                    if (
+                        v := valid_verification(
+                            state, memory, g.claim_verification_id, blocked_reasons
+                        )
+                    )
+                    is not None
+                ),
+                None,
+            )
+            if verification is None:
+                reasons.append("claim_verification_required")
+    return reasons, None, verification
 
 
 def action_blocked_reasons(
@@ -294,6 +323,66 @@ class RecallGuard:
 
         return self.store.transact(operation)
 
+    def verify_claim(self, data: ClaimVerificationInput, actor: Principal) -> ClaimVerification:
+        require_reviewer(actor)
+
+        def operation(state):
+            memory = get_memory(state, data.memory_id)
+            reasons = verification_blockers(state, memory, data.evidence_source_id, blocked_reasons)
+            if reasons:
+                raise GuardError("Cannot verify claim: " + ", ".join(reasons), 409)
+            source = state.sources[data.evidence_source_id]
+            if data.expected_fingerprint != verification_request_fingerprint(state, memory, source):
+                raise GuardError("Evidence or review state changed; refresh before verifying", 409)
+            if not now() < data.expires_at <= now() + timedelta(hours=24):
+                raise GuardError("Verification expiry must be in the next 24 hours", 422)
+            if current_verification(state, memory, blocked_reasons):
+                raise GuardError("Claim already has a current verification", 409)
+            verification = ClaimVerification(
+                **data.model_dump(),
+                claim=memory.claim.model_copy(deep=True),
+                verified_by=actor.id,
+                record_fingerprint=verification_record_fingerprint(memory, source),
+            )
+            state.claim_verifications[verification.id] = verification
+            audit(
+                state,
+                actor,
+                "claim_verified",
+                [memory.id, verification.id, source.id],
+                method=verification.method,
+                evidence_reference=verification.evidence_reference,
+                expires_at=verification.expires_at.isoformat(),
+                reason=verification.reason,
+            )
+            return verification
+
+        return self.store.transact(operation)
+
+    def withdraw_claim_verification(
+        self, verification_id: str, reason: str, actor: Principal
+    ) -> ClaimVerification:
+        require_reviewer(actor)
+
+        def operation(state):
+            verification = state.claim_verifications.get(verification_id)
+            if verification is None:
+                raise GuardError("Claim verification not found", 404)
+            if verification.withdrawn_at is None:
+                verification.withdrawn_at = now()
+                verification.withdrawn_by = actor.id
+                verification.withdrawal_reason = reason
+                audit(
+                    state,
+                    actor,
+                    "claim_verification_withdrawn",
+                    [verification.memory_id, verification.id],
+                    reason=reason,
+                )
+            return verification
+
+        return self.store.transact(operation)
+
     def grant(self, data: GrantInput, actor: Principal) -> Grant:
         require_reviewer(actor)
 
@@ -303,8 +392,16 @@ class RecallGuard:
                 raise GuardError("Restricted memory cannot receive an action grant", 409)
             if not now() < data.expires_at <= now() + timedelta(hours=24):
                 raise GuardError("Grant expiry must be in the next 24 hours", 422)
+            verification = (
+                current_verification(state, memory, blocked_reasons) if memory.claim else None
+            )
+            if memory.claim and verification is None:
+                raise GuardError("Claim requires current independent verification", 409)
             grant = Grant(
-                **data.model_dump(), memory_hash=memory.content_hash, approved_by=actor.id
+                **data.model_dump(),
+                memory_hash=memory.content_hash,
+                approved_by=actor.id,
+                claim_verification_id=verification.id if verification else None,
             )
             state.grants[grant.id] = grant
             audit(
@@ -312,6 +409,7 @@ class RecallGuard:
                 actor,
                 "grant_issued",
                 [memory.id, grant.id],
+                claim_verification_id=grant.claim_verification_id,
                 action=grant.action,
                 target=grant.target,
                 reason=grant.reason,
@@ -350,9 +448,12 @@ class RecallGuard:
                 candidates.append((score, memory))
             candidates.sort(key=lambda pair: (-pair[0], pair[1].id))
             allowed, blocked, scores, context_reviews = [], [], {}, {}
+            claim_verifications, unverified_claim_ids = {}, []
             # Live policy filtering precedes top-k, including when vectors predate a revoke.
             for score, memory in candidates:
-                reasons, review = action_decision(state, memory, data.action, data.target)
+                reasons, review, verification = action_decision(
+                    state, memory, data.action, data.target
+                )
                 if reasons:
                     blocked.append(BlockedMemory(memory_id=memory.id, reasons=reasons))
                 elif len(allowed) < data.limit:
@@ -360,6 +461,10 @@ class RecallGuard:
                     scores[memory.id] = score
                     if review is not None:
                         context_reviews[memory.id] = review.id
+                    if verification is not None:
+                        claim_verifications[memory.id] = verification.id
+                    elif memory.claim:
+                        unverified_claim_ids.append(memory.id)
             result = RetrievalResult(
                 allowed=allowed,
                 blocked=blocked[:100],
@@ -370,6 +475,8 @@ class RecallGuard:
                 scores=scores,
                 unindexed_count=unindexed,
                 context_reviews=context_reviews,
+                claim_verifications=claim_verifications,
+                unverified_claim_ids=unverified_claim_ids,
             )
             audit(
                 state,
@@ -384,6 +491,8 @@ class RecallGuard:
                 model_id=result.model_id,
                 unindexed_count=unindexed,
                 context_reviews=context_reviews,
+                claim_verifications=claim_verifications,
+                unverified_claim_ids=unverified_claim_ids,
             )
             return result
 

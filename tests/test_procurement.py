@@ -3,6 +3,7 @@ from datetime import timedelta
 
 import pytest
 from pydantic import ValidationError
+from verification_support import verify_claim
 
 from recallguard.agent import ChatModelSummarizer, ProcurementAgent
 from recallguard.engine import GuardError
@@ -41,6 +42,7 @@ def observe(guard, agent, content="ABC account is 991872", summarizer=None):
 
 
 def permit(guard, reviewer, memory_id):
+    verify_claim(guard, memory_id, reviewer)
     return guard.grant(
         GrantInput(
             memory_id=memory_id,
@@ -412,3 +414,24 @@ def test_informational_review_cannot_create_payment_proposal(guard, agent, revie
     with pytest.raises(GuardError):
         procurement.propose("INV-1", root.id, agent)
     assert not guard.inspect(reviewer).payments
+
+
+def test_withdrawn_verification_blocks_approved_payment_even_after_new_evidence(
+    guard, agent, reviewer, procurement, prepared
+):
+    observation, proposal_id = prepared
+    approve(procurement, reviewer, proposal_id)
+    proposal = procurement.proposal(proposal_id)
+    verification_id = proposal.terms.claim_verification_id
+    assert verification_id is not None
+    guard.withdraw_claim_verification(verification_id, "Supporting record withdrawn", reviewer)
+    assert procurement.execute(proposal_id, agent).status == "blocked"
+    # An explicit re-check and new grant still cannot rewrite old payment terms.
+    permit(guard, reviewer, observation.memory_ids[-1])
+    assert "evidence_verification_invalid" in procurement.execute(proposal_id, agent).reasons
+    fresh = plan(guard, agent).proposal_id
+    assert fresh != proposal_id
+    assert procurement.execute(fresh, agent).status == "blocked"
+    approve(procurement, reviewer, fresh)
+    assert procurement.execute(fresh, agent).status == "executed"
+    assert len(guard.inspect(reviewer).receipts) == 1

@@ -738,6 +738,7 @@ function showMemory(id) {
   }
   sources.append(sourceList);
   content.append(sources);
+  if (m.claim) showClaimVerification(m, content);
   content.append(el("h3", "section-title", "Informational review"));
   const option = snapshot.context_review_options[id];
   content.append(
@@ -809,15 +810,28 @@ function showMemory(id) {
       el("strong", "", `${human(g.action)} → ${g.target}`),
       el("p", "", `Expires ${date(g.expires_at)} · ${g.reason}`),
     );
+    if (m.claim)
+      text.append(
+        el(
+          "small",
+          "mono",
+          `Evidence verification: ${g.claim_verification_id || "missing"}`,
+        ),
+      );
+    const evidenceInvalid =
+      m.claim &&
+      (!g.claim_verification_id ||
+        g.claim_verification_id !==
+          snapshot.claim_verification_options[id].current_id);
     row.append(
       text,
       badge(
         new Date(g.expires_at) <= new Date(snapshot.captured_at)
           ? "expired"
-          : restrictions(id).length
+          : restrictions(id).length || evidenceInvalid
             ? "restricted"
             : "unexpired",
-        restrictions(id).length ? "amber" : "gray",
+        restrictions(id).length || evidenceInvalid ? "amber" : "gray",
       ),
     );
     content.append(row);
@@ -829,7 +843,9 @@ function showMemory(id) {
       () => revokeMemory(m),
       "danger",
     );
-  grant.disabled = restrictions(id).length > 0;
+  grant.disabled =
+    restrictions(id).length > 0 ||
+    Boolean(m.claim && !snapshot.claim_verification_options[id].current_id);
   revoke.disabled = m.status === "revoked";
   actions.append(grant, revoke);
   content.append(actions);
@@ -985,6 +1001,146 @@ function grantMemory(m) {
     },
   );
 }
+function showClaimVerification(m, content) {
+  const options = snapshot.claim_verification_options[m.id];
+  content.append(el("h3", "section-title", "Claim verification"));
+  content.append(
+    note(
+      "Record an independent check before granting action scope. A matching source label alone does not prove the claim or the source's independence.",
+    ),
+  );
+  const verify = button("Record independent verification", () =>
+    verifyClaim(m, options),
+  );
+  verify.disabled =
+    !options.evidence_sources.length || Boolean(options.current_id);
+  content.append(verify);
+  if (!options.evidence_sources.length)
+    content.append(
+      el(
+        "p",
+        "field-note",
+        "No eligible evidence source. The claim must be unrestricted and a separate source must be registered.",
+      ),
+    );
+  for (const v of snapshot.claim_verifications.filter(
+    (v) => v.memory_id === m.id,
+  )) {
+    const row = el("div", "list-row"),
+      body = el("div");
+    const status = v.withdrawn_at
+      ? "withdrawn"
+      : new Date(v.expires_at) <= new Date(snapshot.captured_at)
+        ? "expired"
+        : v.id === options.current_id
+          ? "current reviewer check"
+          : "invalidated";
+    body.append(
+      el("strong", "", human(status)),
+      el(
+        "p",
+        "",
+        `${v.evidence_source_id} · ${human(v.method)} · ${v.evidence_reference}`,
+      ),
+      el(
+        "p",
+        "",
+        `${v.verified_by} · Expires ${date(v.expires_at)} · ${v.reason}`,
+      ),
+    );
+    if (v.withdrawn_at)
+      body.append(el("p", "muted", `Withdrawn: ${v.withdrawal_reason}`));
+    row.append(body);
+    if (!v.withdrawn_at)
+      row.append(
+        button(
+          "Withdraw claim verification",
+          () => withdrawVerification(v),
+          "danger",
+        ),
+      );
+    content.append(row);
+  }
+}
+function verifyClaim(m, options) {
+  decisionDialog(
+    "Record independent claim verification",
+    "Complete the check outside this app first. The app records your evidence and enforces its scope; it does not contact the source or confirm the claim itself.",
+    "Record verification",
+    (grid) => {
+      const claim = note(
+        `${m.claim.entity} / ${m.claim.attribute} = ${m.claim.value}`,
+      );
+      claim.classList.add("full");
+      grid.append(claim);
+      const source = selectField(
+        "Separate evidence source",
+        "evidence-source",
+        options.evidence_sources.map((s) => [s.id, s.id]),
+      );
+      const method = selectField("Checking method", "method", [
+        ["official_record", "Official record"],
+        ["callback", "Independent callback"],
+        ["in_person", "In-person check"],
+      ]);
+      const reference = field(
+        "Document, page or callback log reference",
+        "evidence-reference",
+      );
+      reference.input.minLength = 5;
+      reference.input.maxLength = 2000;
+      const details = note("");
+      details.classList.add("full");
+      const updateSource = () => {
+        const selected = options.evidence_sources.find(
+          (s) => s.id === source.input.value,
+        );
+        const registered = snapshot.sources.find((s) => s.id === selected.id);
+        details.textContent = `${registered.id} · ${registered.kind}\n${registered.locator}\nFingerprint: ${selected.fingerprint}`;
+      };
+      source.input.addEventListener("change", updateSource);
+      updateSource();
+      grid.append(source.wrap, method.wrap, reference.wrap, details);
+      expiryFields(grid);
+    },
+    async (data) => {
+      const source = options.evidence_sources.find(
+        (s) => s.id === data.get("evidence-source"),
+      );
+      await api("/claim-verifications", {
+        memory_id: m.id,
+        evidence_source_id: source.id,
+        expected_fingerprint: source.fingerprint,
+        evidence_reference: data.get("evidence-reference").trim(),
+        method: data.get("method"),
+        independently_checked: true,
+        reason: data.get("reason").trim(),
+        expires_at: expiry(data),
+      });
+      return "Independent check recorded. Issue a separate action grant to authorize use.";
+    },
+  );
+}
+function withdrawVerification(v) {
+  decisionDialog(
+    "Withdraw claim verification",
+    "Dependent grants and pending payments will fail their next evidence check. Completed actions remain in the audit history.",
+    "Confirm evidence withdrawal",
+    (grid) =>
+      grid.append(
+        note(
+          `Verification ${v.id} · Memory ${v.memory_id} · ${v.evidence_reference}`,
+        ),
+      ),
+    async (data) => {
+      await api(`/claim-verifications/${encodeURIComponent(v.id)}/withdraw`, {
+        reason: data.get("reason").trim(),
+      });
+      return "Verification withdrawn. Dependent permissions require new evidence and new approvals.";
+    },
+    true,
+  );
+}
 function reviewInformation(m, option) {
   decisionDialog(
     "Review informational context",
@@ -1126,6 +1282,7 @@ function terms(p) {
     ["Display amount", money(p.terms)],
     ["Bank account", p.terms.bank_account],
     ["Evidence memory", p.terms.memory_id],
+    ["Claim verification", p.terms.claim_verification_id || "Missing"],
   ])
     n.append(summary(label, value));
   return n;
@@ -1339,6 +1496,9 @@ function renderRetrieval() {
         );
         if (result.context_reviews[m.id])
           title.append(badge("reviewed exception", "amber"));
+        if (result.claim_verifications[m.id])
+          title.append(badge("claim checked by reviewer", "green"));
+        else if (m.claim) title.append(badge("unverified claim", "amber"));
         card.append(
           title,
           el("p", "", m.content),

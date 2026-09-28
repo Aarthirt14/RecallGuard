@@ -8,6 +8,7 @@ from recallguard.engine import RecallGuard
 from recallguard.models import (
     Action,
     Claim,
+    ClaimVerificationInput,
     GrantInput,
     Principal,
     Role,
@@ -24,6 +25,7 @@ from recallguard.procurement_models import (
     PlanPaymentInput,
     SupplierInput,
 )
+from recallguard.review import review_snapshot
 from recallguard.store import InMemoryStore
 
 
@@ -56,7 +58,35 @@ def run():
             )
         )
 
+    guard.register_source(
+        SourceInput(
+            id="callback",
+            kind=SourceType.USER,
+            locator="fixture:independent-callback",
+        ),
+        reviewer,
+    )
+
     def prepare(observation, supplier, invoice_id):
+        memory_id = observation.memory_ids[-1]
+        options = review_snapshot(guard, reviewer, "memory")["claim_verification_options"][
+            memory_id
+        ]
+        evidence = next(s for s in options["evidence_sources"] if s["id"] == "callback")
+        # This fixture models a human check; it does not contact or verify a bank.
+        guard.verify_claim(
+            ClaimVerificationInput(
+                memory_id=memory_id,
+                evidence_source_id="callback",
+                expected_fingerprint=evidence["fingerprint"],
+                evidence_reference=f"fixture:callback-{supplier}",
+                method="callback",
+                independently_checked=True,
+                reason="Reviewer checked a separate source in this fixture",
+                expires_at=now() + timedelta(minutes=30),
+            ),
+            reviewer,
+        )
         guard.grant(
             GrantInput(
                 memory_id=observation.memory_ids[-1],

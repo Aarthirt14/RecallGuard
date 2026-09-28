@@ -16,13 +16,14 @@ The existing development examples use their own in-memory stores. Running them d
 |---|---|
 | Overview | Count stored memories, restricted records, revocations, and pending proposals; inspect recent activity and embedding coverage |
 | Memories | Search and filter records, inspect full text and content hashes, follow direct parent/descendant links, inspect registered origins and conflicts |
+| Claim verification | Record a completed independent check against a separate registered source; inspect reference/method/expiry; withdraw evidence |
 | Memory review | Review an overblocked direct-source record for informational use; withdraw the exception; issue action grants for otherwise eligible memories; revoke memory lineage |
 | Payment review | Inspect immutable payment terms and evidence, approve the displayed fingerprint, renew an approval, or cancel a proposal |
 | Retrieval lab | Test lexical or configured semantic retrieval for an action and target; inspect allowed context and blocked IDs/reasons |
 | Audit log | Search the latest 200 events and expand their full subject IDs and decision details |
 | Embedding coverage | Backfill up to 32 missing embeddings per click when a model is configured |
 
-A grant permits one memory to influence an action. It does not approve a payment. Payment approval has its own confirmation form, exact terms, fingerprint, and expiry. The dashboard never calls the execution endpoint. All transactions remain simulated. Raw integer minor units and currency are shown during review; the secondary display amount uses the browser's currency formatting convention.
+A structured claim first needs a separate [independent verification record](claim-verification.md). A grant permits one memory to influence an action and binds to that exact verification when present. It does not approve a payment. Payment approval has its own confirmation form, exact terms, fingerprint, and expiry. The dashboard never calls the execution endpoint. All transactions remain simulated. Raw integer minor units and currency are shown during review; the secondary display amount uses the browser's currency formatting convention.
 
 Review forms require an explicit checkbox and a reason. Revocation and cancellation have no restore action. Revocation retains the records for audit and includes descendants added after the displayed snapshot. Quarantined and conflicted records cannot receive grants. [Informational reviews](informational-review.md) permit narrowly scoped exceptions without releasing stored quarantine. Conflicts and restricted ancestry cannot be bypassed.
 
@@ -44,7 +45,7 @@ npm run format:check
 npm test
 ```
 
-Node 22+ is needed for development checks only. The DOM integration suite starts a fresh local FastAPI service with isolated synthetic data for each test. It checks reviewer access, malicious text rendering, filters and pagination, explicit review confirmation, exact grants, informational approval/withdrawal and stale-dialog rejection, descendant revocation, payment approval/cancellation, stale evidence rejection, retrieval, embedding backfill, audit details, and disconnected-session race handling.
+Node 22+ is needed for development checks only. The DOM integration suite starts a fresh local FastAPI service with isolated synthetic data for each test. It checks reviewer access, malicious text rendering, filters and pagination, explicit review confirmation, exact grants, independent verification and withdrawal, informational approval/withdrawal and stale-dialog rejection, descendant revocation, payment approval/cancellation, stale evidence rejection, retrieval, embedding backfill, audit details, and disconnected-session race handling.
 
 These tests use jsdom and the real API. They do not render CSS or prove native dialog focus behavior, mobile layout, or screen-reader accessibility. A manual browser check is still needed for those aspects. The cloud browser in the implementation workspace could not reach localhost, so rendered-browser verification was not completed there.
 

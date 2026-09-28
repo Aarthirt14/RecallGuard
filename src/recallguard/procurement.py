@@ -14,6 +14,7 @@ from recallguard.engine import (
     GuardError,
     action_blocked_reasons,
     audit,
+    blocked_reasons,
     get_memory,
     require_reviewer,
 )
@@ -31,6 +32,7 @@ from recallguard.procurement_models import (
     SupplierInput,
 )
 from recallguard.store import State, Store
+from recallguard.verification import current_verification, valid_verification
 
 
 def fingerprint(value: dict) -> str:
@@ -56,6 +58,8 @@ def evidence_reasons(state: State, terms: PaymentTerms) -> list[str]:
     reasons = action_blocked_reasons(state, memory, Action.PAYMENT, f"supplier:{terms.supplier_id}")
     if memory.content_hash != terms.memory_hash:
         reasons.append("memory_changed")
+    if not valid_verification(state, memory, terms.claim_verification_id, blocked_reasons):
+        reasons.append("evidence_verification_invalid")
     claim = memory.claim
     if not claim or (
         claim.entity != f"supplier:{terms.supplier_id}"
@@ -135,6 +139,7 @@ class Procurement:
             memory = get_memory(state, memory_id)
             if not memory.claim:
                 raise GuardError("A structured account claim is required", 409)
+            verification = current_verification(state, memory, blocked_reasons)
             try:
                 terms = PaymentTerms(
                     invoice_id=invoice.id,
@@ -145,6 +150,7 @@ class Procurement:
                     bank_account=memory.claim.value,
                     memory_id=memory.id,
                     memory_hash=memory.content_hash,
+                    claim_verification_id=verification.id if verification else None,
                 )
             except ValidationError:
                 raise GuardError("Unsupported account format", 422) from None
