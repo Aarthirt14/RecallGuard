@@ -545,3 +545,110 @@ test("independent claim verification enables only a separate evidence-bound gran
   });
   assert.equal((await retrieved.json()).allowed.length, 0);
 });
+
+test("conflict resolution previews all affected records and requires explicit independent confirmation", async (t) => {
+  const a = await app(t);
+  const headers = { "X-API-Key": reviewer, "Content-Type": "application/json" };
+  const before = await a.state();
+  const root = before.memories.find(
+    (m) => m.content === "Northstar account is NS123456",
+  );
+  const other = await fetch(`${a.url}/memories`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      content: "Northstar account is NS999999",
+      source_id: "invoice-file",
+      claim: { ...root.claim, value: "NS999999" },
+    }),
+  });
+  assert.equal(other.status, 201);
+  const conflict = await other.json();
+  await a.connect();
+  await a.navigate("memories");
+  a.click(root.content);
+  a.click("Resolve using this claim");
+  assert.match(
+    a.q("#action-content").textContent,
+    /3 records will remain or become revoked/,
+  );
+  assert.match(a.q("#action-content").textContent, /NS999999/);
+  assert.match(
+    a.q("#action-content").textContent,
+    /Retirement cannot be undone/,
+  );
+  assert.ok(
+    ![...a.q("#field-evidence-source").options].some(
+      (o) => o.value === "invoice-file",
+    ),
+  );
+  a.q("#field-evidence-reference").value = "Independent bank record 001";
+  a.q("#field-reason").value = "Checked independent document";
+  a.q("#action-content form").requestSubmit();
+  assert.equal(
+    a.calls.filter((c) => c.path === "/conflict-resolutions").length,
+    0,
+  );
+  await a.submitDecision();
+  assert.equal(a.q("#action-content .error").textContent, "");
+  const after = await a.state();
+  assert.equal(after.conflict_resolutions.length, 1);
+  const resolution = after.conflict_resolutions[0];
+  assert.ok(resolution.retired_memory_ids.includes(root.id));
+  assert.ok(resolution.retired_memory_ids.includes(conflict.id));
+  assert.ok(
+    after.memories
+      .filter((m) => resolution.retired_memory_ids.includes(m.id))
+      .every((m) => m.status === "revoked"),
+  );
+  const replacement = after.memories.find(
+    (m) => m.id === resolution.replacement_memory_id,
+  );
+  assert.equal(replacement.status, "active");
+  assert.equal(
+    after.claim_verification_options[replacement.id].current_id,
+    null,
+  );
+  a.click(replacement.content);
+  assert.match(
+    a.q("#detail-content").textContent,
+    /Conflict retired with a replacement/,
+  );
+  assert.equal(
+    [...a.q("#detail-content").querySelectorAll("button")].find(
+      (b) => b.textContent === "Grant action scope",
+    ).disabled,
+    true,
+  );
+});
+
+test("conflict resolution rejects an impact change after opening the dialog", async (t) => {
+  const a = await app(t);
+  const headers = { "X-API-Key": reviewer, "Content-Type": "application/json" };
+  const before = await a.state();
+  const root = before.memories.find(
+    (m) => m.content === "Northstar account is NS123456",
+  );
+  const write = async (data) => {
+    const response = await fetch(`${a.url}/memories`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(data),
+    });
+    assert.equal(response.status, 201);
+  };
+  await write({
+    content: "Northstar alternate account",
+    source_id: "invoice-file",
+    claim: { ...root.claim, value: "NS999999" },
+  });
+  await a.connect();
+  await a.navigate("memories");
+  a.click(root.content);
+  a.click("Resolve using this claim");
+  a.q("#field-evidence-reference").value = "Independent bank record 002";
+  await write({ content: "New derived observation", parent_ids: [root.id] });
+  await a.submitDecision();
+  assert.match(a.q("#action-content .error").textContent, /impact changed/);
+  assert.equal((await a.state()).conflict_resolutions.length, 0);
+});

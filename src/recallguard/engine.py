@@ -4,6 +4,13 @@ import hashlib
 import re
 from datetime import timedelta
 
+from recallguard.conflicts import (
+    conflict_members,
+    descendants_of,
+    replacement_content,
+    resolution_blockers,
+    resolution_fingerprint,
+)
 from recallguard.context_review import (
     current_review,
     review_blockers,
@@ -17,6 +24,8 @@ from recallguard.models import (
     BlockedMemory,
     ClaimVerification,
     ClaimVerificationInput,
+    ConflictResolution,
+    ConflictResolutionInput,
     ContextReview,
     ContextReviewInput,
     Grant,
@@ -194,77 +203,140 @@ class RecallGuard:
             raise GuardError("Potential credential detected; memory was not stored", 422)
         vector = self._encode([data.content])[0] if self.encoder else None
 
-        def operation(state):
-            parents = [get_memory(state, mid) for mid in data.parent_ids]
-            reasons = []
-            taints = set()
-            if parents:
-                origin_ids = sorted({origin for p in parents for origin in p.origin_ids})
-                authority = min(p.authority for p in parents)
-                taints.update(t for p in parents for t in p.taint_labels)
-                if any(blocked_reasons(state, p) for p in parents):
-                    reasons.append("restricted_parent")
-            else:
-                source = state.sources.get(data.source_id)
-                if source is None:
-                    raise GuardError("Source not found", 404)
-                # The agent may ingest only low-authority external roots. Tool results
-                # are reviewer-ingested until authenticated tool adapters exist.
-                if source.kind not in EXTERNAL:
-                    require_reviewer(actor)
-                authority = AUTHORITY[source.kind]
-                origin_ids = [source.id]
-                if source.kind in EXTERNAL:
-                    taints.add("untrusted_external")
-            is_instruction = bool(screening.instruction_signals)
-            if is_instruction:
-                taints.add("contains_instruction")
-                reasons.append("instruction_requires_review")
-                reasons.extend(f"content_policy:{s}" for s in screening.instruction_signals)
-            if "contains_instruction" in taints:
-                reasons.append("instruction_taint")
-            memory_type = (
-                MemoryType.INSTRUCTION
-                if is_instruction
-                else MemoryType.EXTERNAL_CLAIM
-                if "untrusted_external" in taints
-                else MemoryType.OBSERVATION
-            )
-            memory = Memory(
-                content=data.content,
-                content_hash=hashlib.sha256(data.content.encode()).hexdigest(),
-                memory_type=memory_type,
-                source_id=data.source_id,
-                parent_ids=data.parent_ids,
-                origin_ids=origin_ids,
-                authority=authority,
-                taint_labels=sorted(taints),
-                status=Status.QUARANTINED if reasons else Status.ACTIVE,
-                reasons=sorted(set(reasons)),
-                claim=data.claim,
-            )
-            if memory.claim:
-                key = (memory.claim.entity.casefold(), memory.claim.attribute.casefold())
-                for other in state.memories.values():
-                    if not other.claim or other.status == Status.REVOKED:
-                        continue
-                    other_key = (other.claim.entity.casefold(), other.claim.attribute.casefold())
-                    if key == other_key and memory.claim.value != other.claim.value:
-                        memory.conflict_ids.append(other.id)
-                        other.conflict_ids.append(memory.id)
-                        # Conservative until an explicit conflict-resolution workflow exists.
-                        for item in (other, memory):
-                            item.status = Status.QUARANTINED
-                            item.taint_labels = sorted(set(item.taint_labels) | {"conflicted"})
-                            item.reasons = sorted(set(item.reasons) | {"conflicting_claim"})
-                        audit(state, actor, "conflict_detected", [other.id, memory.id])
-            state.memories[memory.id] = memory
-            if vector is not None:
-                record = make_record(memory, self.encoder, vector)
-                state.embeddings[record.id] = record
-            audit(state, actor, "memory_written", [memory.id], decision=memory.status)
-            return memory
+        return self.store.transact(lambda state: self._remember(state, data, actor, vector))
 
+    def _remember(self, state, data, actor, vector=None):
+        screening = screen_memory(data.content, data.claim)
+        if screening.credential:
+            raise GuardError("Potential credential detected; memory was not stored", 422)
+        parents = [get_memory(state, mid) for mid in data.parent_ids]
+        reasons = []
+        taints = set()
+        if parents:
+            origin_ids = sorted({origin for p in parents for origin in p.origin_ids})
+            authority = min(p.authority for p in parents)
+            taints.update(t for p in parents for t in p.taint_labels)
+            if any(blocked_reasons(state, p) for p in parents):
+                reasons.append("restricted_parent")
+        else:
+            source = state.sources.get(data.source_id)
+            if source is None:
+                raise GuardError("Source not found", 404)
+            # The agent may ingest only low-authority external roots. Tool results
+            # are reviewer-ingested until authenticated tool adapters exist.
+            if source.kind not in EXTERNAL:
+                require_reviewer(actor)
+            authority = AUTHORITY[source.kind]
+            origin_ids = [source.id]
+            if source.kind in EXTERNAL:
+                taints.add("untrusted_external")
+        is_instruction = bool(screening.instruction_signals)
+        if is_instruction:
+            taints.add("contains_instruction")
+            reasons.append("instruction_requires_review")
+            reasons.extend(f"content_policy:{s}" for s in screening.instruction_signals)
+        if "contains_instruction" in taints:
+            reasons.append("instruction_taint")
+        memory_type = (
+            MemoryType.INSTRUCTION
+            if is_instruction
+            else MemoryType.EXTERNAL_CLAIM
+            if "untrusted_external" in taints
+            else MemoryType.OBSERVATION
+        )
+        memory = Memory(
+            content=data.content,
+            content_hash=hashlib.sha256(data.content.encode()).hexdigest(),
+            memory_type=memory_type,
+            source_id=data.source_id,
+            parent_ids=data.parent_ids,
+            origin_ids=origin_ids,
+            authority=authority,
+            taint_labels=sorted(taints),
+            status=Status.QUARANTINED if reasons else Status.ACTIVE,
+            reasons=sorted(set(reasons)),
+            claim=data.claim,
+        )
+        if memory.claim:
+            key = (memory.claim.entity.casefold(), memory.claim.attribute.casefold())
+            for other in state.memories.values():
+                if not other.claim or other.status == Status.REVOKED:
+                    continue
+                other_key = (other.claim.entity.casefold(), other.claim.attribute.casefold())
+                if key == other_key and memory.claim.value != other.claim.value:
+                    memory.conflict_ids.append(other.id)
+                    other.conflict_ids.append(memory.id)
+                    # Conflicts stay quarantined; resolution creates a separate replacement.
+                    for item in (other, memory):
+                        item.status = Status.QUARANTINED
+                        item.taint_labels = sorted(set(item.taint_labels) | {"conflicted"})
+                        item.reasons = sorted(set(item.reasons) | {"conflicting_claim"})
+                    audit(state, actor, "conflict_detected", [other.id, memory.id])
+        state.memories[memory.id] = memory
+        if vector is not None:
+            record = make_record(memory, self.encoder, vector)
+            state.embeddings[record.id] = record
+        audit(state, actor, "memory_written", [memory.id], decision=memory.status)
+        return memory
+
+    def resolve_conflict(
+        self, data: ConflictResolutionInput, actor: Principal
+    ) -> ConflictResolution:
+        require_reviewer(actor)
+
+        def operation(state):
+            selected = get_memory(state, data.selected_memory_id)
+            source = state.sources.get(data.evidence_source_id)
+            if source is None:
+                raise GuardError("Evidence source not found", 404)
+            reasons = resolution_blockers(state, selected, source)
+            if reasons:
+                raise GuardError("Cannot resolve conflict: " + ", ".join(reasons), 409)
+            if data.expected_fingerprint != resolution_fingerprint(state, selected, source):
+                raise GuardError("Conflict or impact changed; refresh before resolving", 409)
+            members = conflict_members(state, selected)
+            affected = descendants_of(state, set(members))
+            for mid in affected:
+                memory = state.memories[mid]
+                memory.status = Status.REVOKED
+                memory.reasons = sorted(
+                    set(memory.reasons) | {"conflict_retired", "revoked_lineage"}
+                )
+            # This is a NEW independent-source assertion, not a derived memory.
+            # No old authority, grant, verification, or payment approval is copied.
+            replacement = self._remember(
+                state,
+                MemoryInput(
+                    content=replacement_content(selected),
+                    source_id=source.id,
+                    claim=selected.claim.model_copy(deep=True),
+                ),
+                actor,
+            )
+            resolution = ConflictResolution(
+                **data.model_dump(),
+                claim=selected.claim.model_copy(deep=True),
+                conflicting_memory_ids=members,
+                retired_memory_ids=affected,
+                replacement_memory_id=replacement.id,
+                resolved_by=actor.id,
+            )
+            state.conflict_resolutions[resolution.id] = resolution
+            audit(
+                state,
+                actor,
+                "conflict_resolved",
+                [*affected, replacement.id, resolution.id],
+                reason=data.reason,
+                evidence_source_id=source.id,
+                evidence_reference=data.evidence_reference,
+                method=data.method,
+                selected_memory_id=selected.id,
+            )
+            return resolution
+
+        # No model call inside the transaction. Semantic workspaces can use the
+        # existing reviewer backfill after this atomic retirement/replacement.
         return self.store.transact(operation)
 
     def review_context(self, data: ContextReviewInput, actor: Principal) -> ContextReview:

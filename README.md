@@ -13,7 +13,7 @@ Origin-bound memory controls for AI agents. Preserve where a memory came from, k
 - [Independent claim verification](docs/claim-verification.md) with source/reference/method records, expiry, withdrawal, and evidence-bound action grants and payment proposals.
 - Expiring, withdrawable [informational reviews](docs/informational-review.md) for overblocked direct-source records, without releasing quarantine or authorizing tools.
 - Context screening for behavior-changing directives, common encoded wrappers, and instructions or credential assignments in structured claim fields. Live checks also cover older memories and their ancestors.
-- Conflict detection for explicitly supplied entity/attribute/value claims.
+- Conflict detection for explicitly supplied entity/attribute/value claims, with reviewer-controlled [retirement and independent replacement](docs/conflict-resolution.md).
 - Retrieval checks lifecycle, all ancestors, conflicts, and exact action/target approvals before returning context.
 - Time-limited, audited grants bound to one memory and its content hash. Grants never transfer to descendants.
 - Conservative descendant revocation, including invalidation of existing grants at retrieval time.
@@ -184,16 +184,16 @@ The current store is single-workspace. Neo4j operations serialize on a workspace
 - Semantic retrieval uses an exact full-workspace cosine scan, not an indexed vector database. Similarity thresholds are not calibrated confidence scores. See [retrieval limitations](docs/semantic-retrieval.md).
 - Instruction screening uses English patterns with bounded normalization. It still misses novel obfuscation, multilingual attacks and declarative misinformation, and can quarantine harmless quotations. See [screening behavior and upgrade notes](docs/context-screening.md). No general detector accuracy is claimed.
 - Credential detection is a limited pattern check, not comprehensive secret scanning.
-- Conflict keys come from the caller; there is no semantic extraction or automatic independent corroboration. Reviewer verification records track a human check, not proof of truth. Both conflicting claims are quarantined. This is fail-closed but creates an availability tradeoff.
-- Revocation disables all descendants, even if they have other parents. Claim-level repair and independent-support verification are future work. Revocation is not physical deletion: records remain available to reviewers for auditing.
+- Conflict keys come from the caller; there is no semantic extraction or automatic independent corroboration. Reviewer verification records track a human check, not proof of truth. Both conflicting claims are quarantined. A reviewer can retire the affected group and create an independently sourced replacement; this remains a human judgment and creates an availability tradeoff.
+- Revocation disables all descendants, even if they have other parents. Selective claim-level repair of existing descendants remains future work; conflict resolution retires them instead. Revocation is not physical deletion: records remain available to reviewers for auditing.
 - Content hashes bind approvals; they are not signatures and do not protect against a database administrator modifying records. Audit events have no public mutation API, but are not tamper-proof.
 - Memory grants permit influence until expiry; they are reusable and not transaction approval tokens. Simulator transaction approvals are separate and single-execution per invoice.
 - The LangGraph workflow is a fixed procurement workflow, not an open-ended autonomous planner. The optional chat-model adapter is dependency-injected; no hosted provider is configured or evaluated.
 - Session IDs label runs; they are not identity or tenant boundaries. Business records persist in Neo4j, while graph invocations have no checkpoint/replay service. A crashed observation can leave a root without a summary; repeating observation may create duplicate informational records. Payment retries remain idempotent.
-- The dashboard is plain JavaScript served by FastAPI, not Next.js. It has no individual reviewer accounts, conflict-resolution workflow, or server-side pagination.
+- The dashboard is plain JavaScript served by FastAPI, not Next.js. It has no individual reviewer accounts or server-side pagination.
 - The offline evaluation uses original synthetic fixtures and minimal retrieval ablations. No MPBench adapter, hosted LLM-filter baseline, or published benchmark results yet.
 
-Next: add indexed candidate retrieval, a justified external-benchmark adapter, and explicit conflict resolution. The offline runner now provides reproducible context-level comparisons. Verify benchmark availability and licenses before importing datasets. Extending the simulated gate to a real payment provider requires a separate durable outbox and provider idempotency design; a database transaction cannot atomically commit an external bank transfer.
+Next: add indexed candidate retrieval, a justified external-benchmark adapter, and selective repair backed by independent support. The offline runner now provides reproducible context-level comparisons. Verify benchmark availability and licenses before importing datasets. Extending the simulated gate to a real payment provider requires a separate durable outbox and provider idempotency design; a database transaction cannot atomically commit an external bank transfer.
 
 See [architecture and threat model](docs/architecture.md) for the invariants and acceptance cases.
 
@@ -205,6 +205,6 @@ python -m ruff format --check .
 python -m pytest -q
 ```
 
-The Neo4j integration tests are skipped unless `NEO4J_TEST_URI` and `NEO4J_TEST_PASSWORD` are set. They use random namespaces and clean up only those namespaces. They cover core persistence and the agent/review/payment lifecycle across reconnects, including concurrent execution and revoked evidence. GitHub Actions provisions Neo4j and runs them alongside the unit and API tests and both examples. Separate jobs run the optional real-model smoke test and the dashboard DOM/API integration suite. See [dashboard checks](docs/dashboard.md) for the Node development commands and browser-verification limits.
+The Neo4j integration tests are skipped unless `NEO4J_TEST_URI` and `NEO4J_TEST_PASSWORD` are set. They use random namespaces and clean up only those namespaces. They cover core persistence and the agent/review/payment lifecycle across reconnects, including concurrent execution and revoked evidence. GitHub Actions provisions Neo4j and runs them alongside the unit and API tests and all four examples. Separate jobs run the optional real-model smoke test and the dashboard DOM/API integration suite. See [dashboard checks](docs/dashboard.md) for the Node development commands and browser-verification limits.
 
 Implementation references: [FastAPI security](https://fastapi.tiangolo.com/reference/security/), [FastAPI tests](https://fastapi.tiangolo.com/tutorial/testing/), [Neo4j managed transactions](https://neo4j.com/docs/python-manual/current/transactions/).
