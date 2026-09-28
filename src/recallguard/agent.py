@@ -8,7 +8,7 @@ from typing import Protocol, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
-from recallguard.engine import GuardError, RecallGuard, audit
+from recallguard.engine import GuardError, RecallGuard, audit, blocked_reasons
 from recallguard.models import (
     Action,
     Claim,
@@ -137,7 +137,23 @@ class ProcurementAgent:
             }
 
         def summarize(state: GraphState):
-            root = self.guard.store.transact(lambda s: s.memories[state["memory_id"]])
+            def admitted_root(store_state):
+                root = store_state.memories[state["memory_id"]]
+                return root, blocked_reasons(store_state, root)
+
+            root, restrictions = self.guard.store.transact(admitted_root)
+            if restrictions:
+                # A rejected prompt must not reach even a caller-supplied model.
+                # The root remains reviewable; no fabricated summary is created.
+                return {
+                    "run": record_step(
+                        state["run"],
+                        "summarize_with_lineage",
+                        "blocked",
+                        status="blocked",
+                        reasons=["restricted_summary_input", *restrictions],
+                    )
+                }
             # The model receives a detached claim copy; it cannot change the trusted
             # adapter's original claim or pick a source or parent for the derived write.
             try:

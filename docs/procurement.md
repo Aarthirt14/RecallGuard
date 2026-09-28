@@ -16,7 +16,7 @@ flowchart TD
   G -->|Already executed| E[Existing receipt]
 ```
 
-The observation graph writes an external root, generates summary prose, and stores the summary with a parent fixed by adapter code. The model cannot supply a source identity, authority, parent ID, or replacement structured claim. A failed summarizer leaves the screened root and records a failed run; it never returns unscreened model text as fallback.
+The observation graph writes an external root, rechecks its current restrictions, and only then calls the summarizer. A restricted root yields a blocked run with one memory ID and `restricted_summary_input`; no summarizer call or summary write occurs. For admitted input it generates summary prose and stores the summary with a parent fixed by adapter code. The model cannot supply a source identity, authority, parent ID, or replacement structured claim. A failed summarizer leaves the screened root and records a failed run; it never returns unscreened model text as fallback.
 
 The payment graph loads a registered invoice, retrieves context with `action=payment`, selects a permitted structured account claim, and creates a proposal. It ends at a reviewable proposal. The execution graph is invoked separately after review and enters the tool gate. Both graphs re-read durable records; a saved run is an audit trace, not an authorization token.
 
@@ -134,10 +134,10 @@ An executed payment cannot be cancelled by these endpoints; its receipt is histo
 
 ## Execution guarantees and limits
 
-The gate rechecks active ancestry, conflict status, exact memory grant, expiry, structured account/supplier binding, immutable invoice terms, current reviewer approval, cancellation, and invoice payment history. That check and the simulated receipt write happen in a single store transaction. Tests exercise concurrent retries and client reconnection.
+The gate rechecks current content screening, active ancestry, conflict status, exact memory grant, expiry, structured account/supplier binding, immutable invoice terms, current reviewer approval, cancellation, and invoice payment history. That check and the simulated receipt write happen in a single store transaction. Tests exercise concurrent retries and client reconnection.
 
 This atomicity applies only to the local simulated ledger. Real money movement cannot be made atomic by calling a bank inside a retryable Neo4j callback. A real integration needs a durable outbox, provider idempotency keys, reconciliation, and a documented policy for revocation after dispatch.
 
-The service remains single-workspace with shared role keys. Session IDs are labels, not access boundaries. A production multi-user system needs per-user authentication and authorization. Source authentication, open-ended planning, semantic retrieval, checkpoint recovery, and benchmark evaluation remain unfinished.
+The service remains single-workspace with shared role keys. Session IDs are labels, not access boundaries. A production multi-user system needs per-user authentication and authorization. Source authentication, open-ended planning, indexed semantic retrieval, checkpoint recovery, and representative benchmark evaluation remain unfinished.
 
 Implementation reference: [LangGraph Graph API](https://docs.langchain.com/oss/python/langgraph/graph-api).

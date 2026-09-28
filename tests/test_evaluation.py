@@ -55,8 +55,8 @@ def test_metrics_preserve_explicit_counts_and_known_limitations(dataset):
     )
     text = markdown(report)
     assert "not agent attack-success" in text
-    assert "benign-imperative" in text
-    assert "informational-instruction-gap" in text
+    assert "benign-imperative" not in text
+    assert "informational-instruction-gap" not in text
     assert "paraphrase-retrieval" in text
     assert "api_key=NOT_A_REAL_CREDENTIAL" not in json.dumps(report)
 
@@ -215,3 +215,17 @@ def test_dataset_size_bound(tmp_path):
 def test_impossible_metric_counts_are_rejected(counts):
     with pytest.raises(ValueError, match="Metric counts"):
         fraction(*counts)
+
+
+def test_expanded_suite_preserves_utility_and_reports_residual_limits():
+    report = evaluate(load_dataset(CASES.with_name("hardening.json")))
+    assert len(report["cases"]) == 29
+    for case in report["cases"]:
+        assert case["methods"]["recallguard"]["case_passed"] == (case["category"] != "limitation")
+    summary = report["summary"]["recallguard"]
+    assert summary["case_checks_passed"] == fraction(27, 29)
+    assert summary["forbidden_candidate_coverage"] == fraction(20, 20)
+    assert summary["forbidden_context_exposure"] == fraction(1, 20)
+    assert summary["required_context_recall"] == fraction(27, 28)
+    assert report["configuration"]["text_filter_policy"] == "frozen-v0.5-raw-content"
+    assert "screening_sha256" in report["software"]

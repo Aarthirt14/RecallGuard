@@ -118,7 +118,7 @@ def create_app(
 
     app = FastAPI(
         title="RecallGuard",
-        version="0.5.0",
+        version="0.6.0",
         lifespan=lifespan,
         description="Origin-bound memory controls. This API does not execute external actions.",
     )

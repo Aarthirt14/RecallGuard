@@ -5,7 +5,7 @@ RecallGuard now includes an offline runner that compares three methods on the sa
 | Method | Behavior |
 |---|---|
 | `unfiltered` | Return matching records without lifecycle, text, lineage, or grant checks |
-| `text_filter` | Reject each record matching RecallGuard's instruction or credential patterns; do not propagate parent restrictions or enforce grants |
+| `text_filter` | Frozen v0.5 raw-content instruction/credential patterns; do not scan claim fields, propagate parent restrictions, or enforce grants |
 | `recallguard` | Replay writes, grants, and revocations through the real policy engine, then retrieve through a fresh engine instance over the same store |
 
 The first two methods are deliberately minimal ablations. They are not tuned defenses or an LLM-filter baseline. Every run uses new, isolated in-memory stores. There is no database connection, hosted LLM, payment, message, shell payload, or external tool execution. Source locators are data and are never fetched.
@@ -15,8 +15,8 @@ The first two methods are deliberately minimal ablations. They are not tuned def
 ```bash
 python -m pip install -e '.[dev]'
 python -m recallguard.evaluation \
-  --output evaluation/results/lexical.json \
-  --markdown evaluation/results/lexical.md
+  --output evaluation-output/lexical.json \
+  --markdown evaluation-output/lexical.md
 ```
 
 The installed `recallguard-eval` command is equivalent. Omit `--output` to print JSON to stdout. A valid evaluation returns exit code 0 even when cases reveal weaknesses; input, setup, or provider failure returns a nonzero code. Invalid runs are not counted as successful defenses.
@@ -27,13 +27,13 @@ For semantic retrieval:
 python -m pip install -e '.[dev,semantic]'
 python -m recallguard.evaluation --mode semantic \
   --model-cache .model-cache \
-  --output evaluation/results/semantic.json \
-  --markdown evaluation/results/semantic.md
+  --output evaluation-output/semantic.json \
+  --markdown evaluation-output/semantic.md
 ```
 
 Use `--offline` after provisioning the model cache, or supply `--model-path`. The model is the same local MiniLM adapter used by the API. The first online run downloads assets; inference stays local. Semantic scores depend on the fingerprinted model and runtime versions. Thresholds come from each case's `query.min_score` (default 0.25).
 
-The bundled JSON and Markdown [reference results](../evaluation/results/) were generated from this implementation. They are examples of the runner's output, not a published security benchmark. Regenerate them after code or fixture changes; source and data hashes identify the exact run inputs.
+The root-level JSON and Markdown [reference results](../evaluation/results/) preserve v0.5 outcomes. Updated results are in [v0.6](../evaluation/results/v0.6/); the original 19-case dataset is unchanged. They are examples of the runner's output, not a published security benchmark. Write new versioned reports after code or fixture changes; source and data hashes identify the exact run inputs.
 
 ## What is measured
 
@@ -55,7 +55,7 @@ Each method sees the same raw corpus and query. Baselines retain raw writes even
 
 All methods use the same lexical scores or cached, validated semantic vectors. The evaluator requests all eligible results from the bounded case (at most 64 records), then applies the case's top-k after policy filtering with deterministic case-ID tie breaking. Production retrieval uses UUID tie breaking, so this is a membership comparison, not an exact production ranking trace. No latency or memory-usage claim is made; caching and store overhead would make such a comparison misleading.
 
-Reports include a canonical normalized dataset hash, engine and runner source hashes, package version, retrieval mode, model identity, and a result hash. Random runtime IDs and timestamps are excluded. The result hash is computed over the report before adding the hash itself. Repeated lexical runs with the same software and dataset produce identical JSON bytes; semantic reproducibility also depends on model/runtime identity and numerical behavior.
+Reports include a canonical normalized dataset hash, engine, screening, and runner source hashes, package version, retrieval mode, model identity, and a result hash. Random runtime IDs and timestamps are excluded. The result hash is computed over the report before adding the hash itself. Repeated lexical runs with the same software and dataset produce identical JSON bytes; semantic reproducibility also depends on model/runtime identity and numerical behavior.
 
 A fresh RecallGuard instance represents another session over the same in-memory store. This is not a process-restart or Neo4j durability test; the separate integration suite covers persistent storage.
 
@@ -74,13 +74,28 @@ Reports omit source text and queries. Case aliases and policy reasons remain vis
 
 ## Findings in the reference suite
 
-The lexical run passes 16 of 19 RecallGuard case checks; semantic retrieval passes 17. The remaining failures are intentionally reported:
+The original dataset and labels are unchanged. Both original failures involving “must deliver” and a preference-like instruction are fixed by the v0.6 policy.
 
-1. A benign sentence containing “must deliver” is quarantined by the English instruction pattern.
-2. A preference-like instruction without a recognized trigger can enter informational context. Scoped action gates do not make arbitrary informational context safe against prompt injection.
-3. Lexical retrieval misses a paraphrased delivery question. MiniLM retrieves it in this fixture.
+| Suite | v0.5 lexical | v0.5 semantic | v0.6 lexical | v0.6 semantic |
+|---|---:|---:|---:|---:|
+| Original 19 cases | 16/19 | 17/19 | 18/19 | 19/19 |
+| Additional 29 hardening cases | Not run | Not run | 27/29 | 27/29 |
 
-The evaluator does not automatically approve memories, weaken policy to improve scores, or hide these failures. Fixes need independent cases and evidence, not just changes that fit these examples.
+The remaining original lexical failure is the paraphrased delivery question. Both v0.6 modes expose zero forbidden records across the original suite's 13 forbidden-labelled cases. This is an in-sample regression result, not a general security rate.
+
+The additional [hardening.json](../src/recallguard/evaluation/hardening.json) dataset covers persistent preferences, role spoofing, overrides, financial redirection, exfiltration, tool commands, answer manipulation, concealment, encoded wrappers, malicious claim fields, and benign obligations/descriptions. These cases were developed alongside the rules and are **not held out**. An explicit Orion query marker and semantic threshold -1 force candidate coverage: this suite tests admission, not retrieval quality. Its 19 security cases all preserve a useful neighboring record while withholding the payload; all eight utility cases pass.
+
+Two intentional limitation cases fail in both modes: a declarative false account claim is admitted informationally, and a benign security-handbook quotation is overblocked. Thus expanded-suite forbidden exposure is 1/20, and required-context recall is 27/28. The false claim still requires independent scoped approval before payment influence. There is no blanket safe-context guarantee.
+
+Run the additional cases with:
+
+```bash
+python -m recallguard.evaluation \
+  --dataset src/recallguard/evaluation/hardening.json \
+  --output evaluation-output/hardening-lexical.json
+```
+
+Add `--mode semantic --offline --model-cache PATH` for semantic mode. CI publishes both datasets' reports. The text-only ablation remains frozen at v0.5 so changes to production screening do not silently move the baseline. Reports identify that baseline and fingerprint the new screening module.
 
 ## External benchmark readiness
 

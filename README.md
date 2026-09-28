@@ -10,7 +10,7 @@ Origin-bound memory controls for AI agents. Preserve where a memory came from, k
 - Memory records with content hashes, source origins, parent links, authority ceilings, taint labels, lifecycle status, and decision reasons.
 - Derived memories inherit the lowest parent authority and the union of parent taints.
 - Agent credentials cannot create trusted roots, register sources, issue approvals, revoke memories, or read raw management endpoints.
-- Rule-based instruction quarantine and rejection of some obvious credential assignments.
+- Context screening for behavior-changing directives, common encoded wrappers, and instructions or credential assignments in structured claim fields. Live checks also cover older memories and their ancestors.
 - Conflict detection for explicitly supplied entity/attribute/value claims.
 - Retrieval checks lifecycle, all ancestors, conflicts, and exact action/target approvals before returning context.
 - Time-limited, audited grants bound to one memory and its content hash. Grants never transfer to descendants.
@@ -180,7 +180,7 @@ The current store is single-workspace. Neo4j operations serialize on a workspace
 ## Limitations and next milestones
 
 - Semantic retrieval uses an exact full-workspace cosine scan, not an indexed vector database. Similarity thresholds are not calibrated confidence scores. See [retrieval limitations](docs/semantic-retrieval.md).
-- Instruction detection uses English patterns; it misses obfuscation and multilingual payloads and may quarantine harmless imperative text. No detector accuracy is claimed.
+- Instruction screening uses English patterns with bounded normalization. It still misses novel obfuscation, multilingual attacks and declarative misinformation, and can quarantine harmless quotations. See [screening behavior and upgrade notes](docs/context-screening.md). No general detector accuracy is claimed.
 - Credential detection is a limited pattern check, not comprehensive secret scanning.
 - Conflict keys come from the caller; there is no semantic extraction or independent corroboration. Both conflicting claims are quarantined. This is fail-closed but creates an availability tradeoff.
 - Revocation disables all descendants, even if they have other parents. Claim-level repair and independent-support verification are future work. Revocation is not physical deletion: records remain available to reviewers for auditing.
