@@ -22,11 +22,12 @@ The payment graph loads a registered invoice, retrieves context with `action=pay
 
 `Supplier`, `Invoice`, `PaymentProposal`, `SimulatedReceipt`, and `AgentRun` are persisted with memory and audit records in Neo4j. You can close the client, create a new agent instance, and continue using a proposal ID. This is application-level durable state, not LangGraph checkpoint restoration. Graph invocations deliberately have no cached authorization state.
 
-## Two permissions with different meanings
+## Evidence and permissions with different meanings
 
 | Permission | What the reviewer approves | What it cannot do |
 |---|---|---|
-| Memory grant | Exact memory/hash may influence payment for `supplier:ABC` until expiry | Approve an invoice, amount, or actual transaction |
+| Claim verification | A reviewer checked the exact structured account claim against a separate registered source; records reference, method, and expiry | Prove truth automatically or authorize an action |
+| Memory grant | Exact memory/hash and verification may influence payment for `supplier:ABC` until expiry | Approve an invoice, amount, or actual transaction |
 | Payment approval | Exact proposal fingerprint: invoice, supplier, amount, currency, account, and supporting memory/hash | Override quarantine, revocation, conflicts, expired memory grants, cancellation, or prior payment |
 
 Amounts use positive integer **minor units**: `8000000` INR minor units is ₹80,000. The registered invoice is the amount/currency source of truth. For currencies with a different minor-unit exponent, the caller must provide the correct minor-unit amount; the service does not convert currencies.
@@ -84,9 +85,11 @@ The response gives `memory_ids` in root-then-summary order and the graph's decis
 
 Expect `status=blocked`, no proposal, and blocked memory IDs. A declarative account payload can pass the instruction heuristic and still fail the consequential-action policy.
 
-### 4. Reviewer: permit the independently checked memory
+### 4. Reviewer: record verification, then permit the memory
 
-Use `POST /grants` from milestone 1 with the summary memory ID, `action=payment`, `target=supplier:ABC`, a review reason, and a timezone-aware expiry in the next 24 hours. This does not change origin or authority. Do this only after checking the account; the example does not verify it for you.
+First register the separately checked source and create `POST /claim-verifications` for the exact summary memory. Supply the current review fingerprint, evidence reference, checking method, explicit independent-check declaration, reason, and expiry. See the [verification walkthrough](claim-verification.md). A grant request for an unverified structured claim returns 409.
+
+Then use `POST /grants` from milestone 1 with the summary memory ID, `action=payment`, `target=supplier:ABC`, a review reason, and a timezone-aware expiry in the next 24 hours. This does not change origin or authority. Do this only after checking the account; the example does not verify it for you.
 
 Repeat step 3. The response now has `status=pending_review` and a `proposal_id`. Call `GET /procurement/payments/{proposal_id}` to inspect the exact terms and fingerprint.
 
@@ -114,7 +117,7 @@ Replace the two placeholders before sending. Approval expiry must be in the next
 
 Expect `executed` and a simulated receipt ID. Retrying the same proposal returns `already_executed` and the same receipt ID. A different proposal cannot pay the same invoice again. The endpoint does not accept an amount, account, action override, or approved flag.
 
-For the stale-approval attack case, revoke the root memory **between steps 5 and 6**. Execution returns `blocked`, and no receipt is written. The invoice remains open.
+For the stale-approval attack case, withdraw the claim verification or revoke the root memory **between steps 5 and 6**. Execution returns `blocked`, and no receipt is written. The invoice remains open.
 
 ### 7. Reviewer: inspect or cancel
 
@@ -134,7 +137,7 @@ An executed payment cannot be cancelled by these endpoints; its receipt is histo
 
 ## Execution guarantees and limits
 
-The gate rechecks current content screening, active ancestry, conflict status, exact memory grant, expiry, structured account/supplier binding, immutable invoice terms, current reviewer approval, cancellation, and invoice payment history. That check and the simulated receipt write happen in a single store transaction. Tests exercise concurrent retries and client reconnection.
+The gate rechecks current content screening, active ancestry, conflict status, exact memory grant, its bound verification, the proposal’s bound verification, expiry, structured account/supplier binding, immutable invoice terms, current reviewer approval, cancellation, and invoice payment history. That check and the simulated receipt write happen in a single store transaction. Tests exercise concurrent retries and client reconnection.
 
 This atomicity applies only to the local simulated ledger. Real money movement cannot be made atomic by calling a bank inside a retryable Neo4j callback. A real integration needs a durable outbox, provider idempotency keys, reconciliation, and a documented policy for revocation after dispatch.
 

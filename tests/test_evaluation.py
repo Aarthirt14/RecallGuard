@@ -17,7 +17,7 @@ from recallguard.evaluation.runner import (
 )
 from recallguard.evaluation.schema import Dataset
 
-CASES = Path(__file__).parents[1] / "src/recallguard/evaluation/cases.json"
+CASES = Path(__file__).parents[1] / "src/recallguard/evaluation/cases-v2.json"
 
 
 @pytest.fixture
@@ -229,3 +229,33 @@ def test_expanded_suite_preserves_utility_and_reports_residual_limits():
     assert summary["required_context_recall"] == fraction(27, 28)
     assert report["configuration"]["text_filter_policy"] == "frozen-v0.5-raw-content"
     assert "screening_sha256" in report["software"]
+
+
+def test_v2_preserves_original_corpus_and_labels_with_explicit_verification_steps(dataset):
+    original = load_dataset(CASES.with_name("cases.json"))
+    assert dataset.schema_version == 2 and original.schema_version == 1
+    for before, after in zip(original.cases, dataset.cases, strict=True):
+        assert before.id == after.id
+        assert before.query == after.query
+        assert before.required_ids == after.required_ids
+        assert before.forbidden_ids == after.forbidden_ids
+        assert before.operations == [op for op in after.operations if op.op != "verify_claim"]
+    # Old structured-claim grants must not be silently given evidence by the evaluator.
+    with pytest.raises(EvaluationError, match="failed unexpectedly"):
+        evaluate(original)
+
+
+def test_verification_setup_requires_v2_and_registered_source(dataset):
+    raw = dataset.model_dump(mode="json")
+    raw["schema_version"] = 1
+    with pytest.raises(ValidationError, match="schema version 2"):
+        Dataset.model_validate(raw)
+    raw["schema_version"] = 2
+    case = next(
+        c for c in raw["cases"] if any(op["op"] == "verify_claim" for op in c["operations"])
+    )
+    next(op for op in case["operations"] if op["op"] == "verify_claim")["evidence_source_id"] = (
+        "missing"
+    )
+    with pytest.raises(ValidationError, match="Unknown verification"):
+        Dataset.model_validate(raw)

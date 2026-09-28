@@ -2,6 +2,7 @@ from datetime import timedelta
 
 import pytest
 from fastapi.testclient import TestClient
+from verification_support import verify_claim
 
 from recallguard.api import Settings, create_app
 from recallguard.engine import audit
@@ -100,6 +101,7 @@ def test_snapshot_exposes_current_payment_blockers(client, guard, reviewer, agen
         ),
         agent,
     )
+    verify_claim(guard, memory.id, reviewer)
     guard.grant(
         GrantInput(
             memory_id=memory.id,

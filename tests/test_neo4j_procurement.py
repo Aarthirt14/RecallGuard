@@ -4,6 +4,7 @@ from datetime import timedelta
 from uuid import uuid4
 
 import pytest
+from verification_support import verify_claim
 
 from recallguard.agent import ProcurementAgent
 from recallguard.engine import RecallGuard
@@ -44,6 +45,7 @@ def test_workflow_review_restart_execution_and_revocation(reviewer, agent):
                 claim=Claim(entity="supplier:ABC", attribute="bank_account", value="991872"),
             )
         )
+        verification = verify_claim(guard, observed.memory_ids[-1], reviewer)
         guard.grant(
             GrantInput(
                 memory_id=observed.memory_ids[-1],
@@ -99,6 +101,9 @@ def test_workflow_review_restart_execution_and_revocation(reviewer, agent):
         assert sum(r.status == "executed" for r in results) == 1
         assert len({r.receipt_id for r in results}) == 1
         assert len(guard.inspect(reviewer).receipts) == 1
+        guard.withdraw_claim_verification(
+            verification.id, "Supporting evidence withdrawn", reviewer
+        )
         guard.revoke(observed.memory_ids[0], "Compromised supplier source", reviewer)
         store.close()
         store = Neo4jStore(*args)
@@ -109,6 +114,8 @@ def test_workflow_review_restart_execution_and_revocation(reviewer, agent):
         )
         assert later.status == "blocked"
         assert "memory_revoked" in later.reasons
+        assert "evidence_verification_invalid" in later.reasons
+        assert guard.inspect(reviewer).claim_verifications[verification.id].withdrawn_at is not None
         assert len(guard.inspect(reviewer).receipts) == 1
         assert guard.inspect(reviewer).invoices["INV-2"].status == "open"
     finally:

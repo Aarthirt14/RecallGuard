@@ -10,6 +10,11 @@ from recallguard.engine import (
 )
 from recallguard.models import Action, Principal, Status, now
 from recallguard.procurement import proposal_reasons
+from recallguard.verification import (
+    current_verification,
+    request_fingerprint,
+    verification_blockers,
+)
 
 
 def review_snapshot(guard: RecallGuard, actor: Principal, backend: str) -> dict:
@@ -36,6 +41,21 @@ def review_snapshot(guard: RecallGuard, actor: Principal, backend: str) -> dict:
             "grants": list(state.grants.values()),
             "memory_restrictions": {
                 m.id: blocked_reasons(state, m) for m in state.memories.values()
+            },
+            "claim_verifications": list(state.claim_verifications.values()),
+            "claim_verification_options": {
+                m.id: {
+                    "current_id": v.id
+                    if (v := current_verification(state, m, blocked_reasons))
+                    else None,
+                    "evidence_sources": [
+                        {"id": source.id, "fingerprint": request_fingerprint(state, m, source)}
+                        for source in state.sources.values()
+                        if not verification_blockers(state, m, source.id, blocked_reasons)
+                    ],
+                }
+                for m in state.memories.values()
+                if m.claim
             },
             "context_reviews": list(state.context_reviews.values()),
             "context_review_options": {

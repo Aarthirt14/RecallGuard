@@ -38,12 +38,19 @@ class GrantScope(Model):
         return self
 
 
+class VerifyClaim(Model):
+    op: Literal["verify_claim"]
+    memory_id: CaseID
+    evidence_source_id: Identifier
+    evidence_reference: Annotated[str, Field(min_length=5, max_length=2000)]
+
+
 class Revoke(Model):
     op: Literal["revoke"]
     memory_id: CaseID
 
 
-Operation = Annotated[Write | GrantScope | Revoke, Field(discriminator="op")]
+Operation = Annotated[Write | GrantScope | Revoke | VerifyClaim, Field(discriminator="op")]
 
 
 class Case(Model):
@@ -74,6 +81,8 @@ class Case(Model):
                 seen.add(operation.id)
             elif operation.memory_id not in seen:
                 raise ValueError("Review operation must refer to an earlier write")
+            elif isinstance(operation, VerifyClaim) and operation.evidence_source_id not in sources:
+                raise ValueError("Unknown verification evidence source")
         if len(seen) > 64:
             raise ValueError("A case may contain at most 64 memories")
         required, forbidden = set(self.required_ids), set(self.forbidden_ids)
@@ -91,7 +100,7 @@ class Case(Model):
 
 
 class Dataset(Model):
-    schema_version: Literal[1]
+    schema_version: Literal[1, 2]
     id: CaseID
     provenance: Annotated[str, Field(min_length=1, max_length=2000)]
     kind: Literal["synthetic", "adapted"]
@@ -99,6 +108,10 @@ class Dataset(Model):
 
     @model_validator(mode="after")
     def unique_cases(self):
+        if self.schema_version == 1 and any(
+            isinstance(op, VerifyClaim) for case in self.cases for op in case.operations
+        ):
+            raise ValueError("Claim verification requires schema version 2")
         if len({case.id for case in self.cases}) != len(self.cases):
             raise ValueError("Duplicate case IDs")
         return self

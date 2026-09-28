@@ -45,6 +45,42 @@ def test_observe_review_execute_api_and_forged_arguments(client):
     expires = (now() + timedelta(minutes=5)).isoformat()
     assert (
         client.post(
+            "/sources",
+            headers=REVIEWER,
+            json={
+                "id": "callback",
+                "kind": "user",
+                "locator": "fixture:independent-callback",
+            },
+        ).status_code
+        == 201
+    )
+    memory_id = observed.json()["memory_ids"][-1]
+    options = client.get("/review", headers=REVIEWER).json()["claim_verification_options"][
+        memory_id
+    ]
+    fingerprint = next(
+        s["fingerprint"] for s in options["evidence_sources"] if s["id"] == "callback"
+    )
+    assert (
+        client.post(
+            "/claim-verifications",
+            headers=REVIEWER,
+            json={
+                "memory_id": memory_id,
+                "evidence_source_id": "callback",
+                "expected_fingerprint": fingerprint,
+                "evidence_reference": "fixture:callback-record",
+                "method": "callback",
+                "independently_checked": True,
+                "reason": "Independently confirmed account",
+                "expires_at": expires,
+            },
+        ).status_code
+        == 201
+    )
+    assert (
+        client.post(
             "/grants",
             headers=REVIEWER,
             json={
@@ -117,3 +153,57 @@ def test_plan_cannot_supply_approval_state(client):
         },
     )
     assert response.status_code == 422
+
+
+def test_verification_endpoint_rejects_agent_and_forged_fingerprint(client):
+    client.post(
+        "/sources", headers=REVIEWER, json={"id": "web", "kind": "web", "locator": "fixture:web"}
+    )
+    client.post(
+        "/sources",
+        headers=REVIEWER,
+        json={"id": "record", "kind": "user", "locator": "fixture:record"},
+    )
+    memory = client.post(
+        "/memories",
+        headers=AGENT,
+        json={
+            "source_id": "web",
+            "content": "Orion account OR1234",
+            "claim": {"entity": "Orion", "attribute": "account", "value": "OR1234"},
+        },
+    ).json()
+    data = {
+        "memory_id": memory["id"],
+        "evidence_source_id": "record",
+        "expected_fingerprint": "0" * 64,
+        "evidence_reference": "fixture:callback",
+        "method": "callback",
+        "independently_checked": True,
+        "reason": "Independent account verification",
+        "expires_at": (now() + timedelta(hours=1)).isoformat(),
+    }
+    assert client.post("/claim-verifications", json=data).status_code == 401
+    assert client.post("/claim-verifications", headers=AGENT, json=data).status_code == 403
+    assert client.post("/claim-verifications", headers=REVIEWER, json=data).status_code == 409
+    options = client.get("/review", headers=REVIEWER).json()["claim_verification_options"][
+        memory["id"]
+    ]
+    data["expected_fingerprint"] = next(
+        s["fingerprint"] for s in options["evidence_sources"] if s["id"] == "record"
+    )
+    approved = client.post("/claim-verifications", headers=REVIEWER, json=data)
+    assert approved.status_code == 201
+    assert approved.headers["cache-control"] == "no-store"
+    path = f"/claim-verifications/{approved.json()['id']}/withdraw"
+    assert (
+        client.post(path, headers=AGENT, json={"reason": "Unauthorized withdrawal"}).status_code
+        == 403
+    )
+    assert (
+        client.post(
+            path, headers=REVIEWER, json={"reason": "Reviewer withdrew evidence"}
+        ).status_code
+        == 200
+    )
+    assert client.post("/claim-verifications", headers=REVIEWER, json=data).status_code == 409

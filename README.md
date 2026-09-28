@@ -10,6 +10,7 @@ Origin-bound memory controls for AI agents. Preserve where a memory came from, k
 - Memory records with content hashes, source origins, parent links, authority ceilings, taint labels, lifecycle status, and decision reasons.
 - Derived memories inherit the lowest parent authority and the union of parent taints.
 - Agent credentials cannot create trusted roots, register sources, issue approvals, revoke memories, or read raw management endpoints.
+- [Independent claim verification](docs/claim-verification.md) with source/reference/method records, expiry, withdrawal, and evidence-bound action grants and payment proposals.
 - Expiring, withdrawable [informational reviews](docs/informational-review.md) for overblocked direct-source records, without releasing quarantine or authorizing tools.
 - Context screening for behavior-changing directives, common encoded wrappers, and instructions or credential assignments in structured claim fields. Live checks also cover older memories and their ancestors.
 - Conflict detection for explicitly supplied entity/attribute/value claims.
@@ -172,7 +173,7 @@ A derived write supplies `parent_ids` instead of `source_id`. A grant supplies `
 
 **A memory grant permits influence; it does not approve a transaction.** The procurement simulator now adds a separate reviewer approval for an exact invoice, amount, currency, account, and evidence record. Its tool gate rechecks both approvals, memory ancestry, conflicts, cancellation, and prior execution inside the same transaction as the simulated ledger write. No real transfer is made.
 
-The general-purpose memory API still depends on callers reporting the action and full lineage. The bundled observation adapter binds summary parents itself, and the simulator fixes the tool action to payment and derives its arguments from stored records. Asking for informational context cannot bypass the simulator's execution gate. Other agents and external tools need equivalent integration; real tool execution, network source authentication, and universal lineage capture are not implemented. Reviewer identity, adapter code, and database access are trusted. The Python engine is an internal library; the HTTP API is the credential boundary.
+The general-purpose memory API still depends on callers reporting the action and full lineage. Structured claims require current independent verification before action grants can be issued; old grants without that evidence binding cannot authorize those claims. The bundled observation adapter binds summary parents itself, and the simulator fixes the tool action to payment and derives its arguments from stored records. Asking for informational context cannot bypass the simulator's execution gate. Other agents and external tools need equivalent integration; real tool execution, network source authentication, and universal lineage capture are not implemented. Reviewer identity, adapter code, and database access are trusted. The Python engine is an internal library; the HTTP API is the credential boundary.
 
 Numeric authority describes the origin ceiling, not factual correctness or executable permission. Approval grants are separate, scoped records and never rewrite origin or remove taint. Higher authority is not sufficient for consequential retrieval.
 
@@ -183,7 +184,7 @@ The current store is single-workspace. Neo4j operations serialize on a workspace
 - Semantic retrieval uses an exact full-workspace cosine scan, not an indexed vector database. Similarity thresholds are not calibrated confidence scores. See [retrieval limitations](docs/semantic-retrieval.md).
 - Instruction screening uses English patterns with bounded normalization. It still misses novel obfuscation, multilingual attacks and declarative misinformation, and can quarantine harmless quotations. See [screening behavior and upgrade notes](docs/context-screening.md). No general detector accuracy is claimed.
 - Credential detection is a limited pattern check, not comprehensive secret scanning.
-- Conflict keys come from the caller; there is no semantic extraction or independent corroboration. Both conflicting claims are quarantined. This is fail-closed but creates an availability tradeoff.
+- Conflict keys come from the caller; there is no semantic extraction or automatic independent corroboration. Reviewer verification records track a human check, not proof of truth. Both conflicting claims are quarantined. This is fail-closed but creates an availability tradeoff.
 - Revocation disables all descendants, even if they have other parents. Claim-level repair and independent-support verification are future work. Revocation is not physical deletion: records remain available to reviewers for auditing.
 - Content hashes bind approvals; they are not signatures and do not protect against a database administrator modifying records. Audit events have no public mutation API, but are not tamper-proof.
 - Memory grants permit influence until expiry; they are reusable and not transaction approval tokens. Simulator transaction approvals are separate and single-execution per invoice.

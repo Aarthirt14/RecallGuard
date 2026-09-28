@@ -31,7 +31,7 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         description="Offline context-admission evaluation; not an agent attack benchmark."
     )
-    parser.add_argument("--dataset", type=Path, default=Path(__file__).with_name("cases.json"))
+    parser.add_argument("--dataset", type=Path, default=Path(__file__).with_name("cases-v2.json"))
     parser.add_argument("--mode", choices=["lexical", "semantic"], default="lexical")
     parser.add_argument("--model-cache", default=os.getenv("RECALLGUARD_EMBEDDING_CACHE"))
     parser.add_argument("--model-path", default=os.getenv("RECALLGUARD_EMBEDDING_MODEL_PATH"))

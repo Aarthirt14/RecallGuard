@@ -37,7 +37,7 @@ The root-level JSON and Markdown [reference results](../evaluation/results/) pre
 
 ## What is measured
 
-The 19 original, handwritten scenarios cover exact grants, scope mismatches, inherited quarantine, revocation, late conflicts, authority ceilings, credential rejection, filtering before top-k, benign information, and known limitations. Each case supplies required memory IDs and forbidden memory IDs independently of the policy being tested. Both sets can be present; unlabelled distractors are allowed but can consume retrieval slots.
+The 19 original, handwritten scenarios (with explicit verification setup in v2) cover exact grants, scope mismatches, inherited quarantine, revocation, late conflicts, authority ceilings, credential rejection, filtering before top-k, benign information, and known limitations. Each case supplies required memory IDs and forbidden memory IDs independently of the policy being tested. Both sets can be present; unlabelled distractors are allowed but can consume retrieval slots.
 
 - **Case checks passed:** cases returning every required ID and no forbidden ID, divided by all cases.
 - **Forbidden context exposure:** cases returning at least one forbidden ID, divided by cases with at least one forbidden ID. Lower is better. This does not measure an agent acting on that text.
@@ -55,17 +55,17 @@ Each method sees the same raw corpus and query. Baselines retain raw writes even
 
 All methods use the same lexical scores or cached, validated semantic vectors. The evaluator requests all eligible results from the bounded case (at most 64 records), then applies the case's top-k after policy filtering with deterministic case-ID tie breaking. Production retrieval uses UUID tie breaking, so this is a membership comparison, not an exact production ranking trace. No latency or memory-usage claim is made; caching and store overhead would make such a comparison misleading.
 
-Reports include a canonical normalized dataset hash, engine, screening, informational-review, and runner source hashes, package version, retrieval mode, model identity, and a result hash. Random runtime IDs and timestamps are excluded. The result hash is computed over the report before adding the hash itself. Repeated lexical runs with the same software and dataset produce identical JSON bytes; semantic reproducibility also depends on model/runtime identity and numerical behavior.
+Reports include a canonical normalized dataset hash, engine, screening, informational-review, claim-verification, and runner source hashes, package version, retrieval mode, model identity, and a result hash. Random runtime IDs and timestamps are excluded. The result hash is computed over the report before adding the hash itself. Repeated lexical runs with the same software and dataset produce identical JSON bytes; semantic reproducibility also depends on model/runtime identity and numerical behavior.
 
 A fresh RecallGuard instance represents another session over the same in-memory store. This is not a process-restart or Neo4j durability test; the separate integration suite covers persistent storage.
 
 ## Add cases
 
-The packaged [cases.json](../src/recallguard/evaluation/cases.json) is the format reference. `--dataset PATH` accepts a strict JSON object with:
+The packaged [cases-v2.json](../src/recallguard/evaluation/cases-v2.json) is the current format reference and CLI default. The original [cases.json](../src/recallguard/evaluation/cases.json) is preserved for historical comparison. `--dataset PATH` accepts a strict JSON object with:
 
-- `schema_version: 1`, a dataset ID, `kind` (`synthetic` or `adapted`), and an honest provenance statement.
+- `schema_version: 2` (version 1 remains accepted for scenarios without verification operations), a dataset ID, `kind` (`synthetic` or `adapted`), and an honest provenance statement.
 - A list of cases with unique IDs, a category (`security`, `utility`, or `limitation`), source registrations, ordered operations, a retrieval query, and outcome labels.
-- Operations: `write` with `MemoryInput` and a stable alias; `grant` for an earlier alias, action, and target; or `revoke` for an earlier alias. Parent references must point to earlier writes. Trusted roots require a fixture reviewer actor.
+- Operations: `write` with `MemoryInput` and a stable alias; `verify_claim` with an earlier alias, separately registered evidence source ID, and evidence reference; `grant` for an earlier alias, action, and target; or `revoke` for an earlier alias. Parent references must point to earlier writes. Trusted roots require a fixture reviewer actor.
 - Optional `expected_error` on a write for an intentional 403/404/409/422 denial. Unexpected errors abort the run; an expected denial that does not happen also aborts it.
 
 Each case is capped at 64 memories and 128 operations; datasets at 500 cases and 4 MiB. Duplicate IDs, unknown references, contradictory labels, and impossible required-result counts are rejected. The selected retrieval mode applies to the entire run. Case query limits and thresholds are included in the dataset fingerprint.
@@ -74,7 +74,7 @@ Reports omit source text and queries. Case aliases and policy reasons remain vis
 
 ## Findings in the reference suite
 
-The original dataset and labels are unchanged. Both original failures involving “must deliver” and a preference-like instruction are fixed by the v0.6 policy.
+The v0.6 results below use the unchanged original dataset and labels. Both original failures involving “must deliver” and a preference-like instruction are fixed by the v0.6 policy.
 
 | Suite | v0.5 lexical | v0.5 semantic | v0.6 lexical | v0.6 semantic |
 |---|---:|---:|---:|---:|
@@ -88,6 +88,10 @@ The additional [hardening.json](../src/recallguard/evaluation/hardening.json) da
 Two intentional limitation cases fail in both modes: a declarative false account claim is admitted informationally, and a benign security-handbook quotation is overblocked. Thus expanded-suite forbidden exposure is 1/20, and required-context recall is 27/28. The false claim still requires independent scoped approval before payment influence. There is no blanket safe-context guarantee.
 
 Version 0.7 adds an explicit human informational-review workflow, tested separately through the engine, API, dashboard, and Neo4j persistence checks. Neither dataset automatically creates reviews, and their default admission outcomes remain unchanged. A manual exception is not counted as a detector improvement. The v0.6 reports remain historical artifacts.
+
+Version 0.8 requires evidence-bound grants for structured claims. Its default dataset is `recallguard-synthetic-v2`: all memory content, queries, and required/forbidden labels match v1, but two grant scenarios now include explicit synthetic `verify_claim` operations against a newly registered separate source. This changes setup and the dataset hash; v2 is not the identical v1 protocol. No evidence is silently inserted by the runner. Running the preserved v1 grant scenarios against v0.8 aborts at the missing verification, instead of counting setup rejection as a defense success. Schema v1 cases without those grants, including `hardening.json`, still run.
+
+The local v0.8 v2 run passes 18/19 lexical and 19/19 semantic cases; the 29-case hardening lexical run remains 27/29. These are synthetic workflow checks with declared reviewer verification, not real factual-validation results. CI generates full reports for the installed version.
 
 Run the additional cases with:
 

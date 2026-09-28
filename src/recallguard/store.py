@@ -7,7 +7,7 @@ from threading import RLock
 from typing import Protocol, TypeVar
 
 from recallguard.embeddings import EmbeddingRecord
-from recallguard.models import AuditEvent, ContextReview, Grant, Memory, Source
+from recallguard.models import AuditEvent, ClaimVerification, ContextReview, Grant, Memory, Source
 from recallguard.procurement_models import (
     AgentRun,
     Invoice,
@@ -24,6 +24,7 @@ class State:
     sources: dict[str, Source] = field(default_factory=dict)
     memories: dict[str, Memory] = field(default_factory=dict)
     grants: dict[str, Grant] = field(default_factory=dict)
+    claim_verifications: dict[str, ClaimVerification] = field(default_factory=dict)
     context_reviews: dict[str, ContextReview] = field(default_factory=dict)
     events: dict[str, AuditEvent] = field(default_factory=dict)
     suppliers: dict[str, Supplier] = field(default_factory=dict)

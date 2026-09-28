@@ -14,10 +14,11 @@ from pydantic import ValidationError
 
 from recallguard.embeddings import Encoder, encode_checked
 from recallguard.engine import GuardError, RecallGuard
-from recallguard.evaluation.schema import Case, Dataset, GrantScope, Revoke, Write
-from recallguard.models import GrantInput, MemoryInput, Principal, Role, now
+from recallguard.evaluation.schema import Case, Dataset, GrantScope, Revoke, VerifyClaim, Write
+from recallguard.models import ClaimVerificationInput, GrantInput, MemoryInput, Principal, Role, now
 from recallguard.screening import POLICY_VERSION
 from recallguard.store import InMemoryStore
+from recallguard.verification import request_fingerprint
 
 METHODS = ("unfiltered", "text_filter", "recallguard")
 MAX_DATASET_BYTES = 4 * 1024 * 1024
@@ -131,6 +132,23 @@ def replay(case: Case, encoder: CachedEncoder | None):
                             f"Case {case.id}: expected write rejection did not occur"
                         )
                     ids[operation.id] = memory.id
+                elif isinstance(operation, VerifyClaim):
+                    state = guard.inspect(reviewer)
+                    memory = state.memories[ids[operation.memory_id]]
+                    source = state.sources[operation.evidence_source_id]
+                    guard.verify_claim(
+                        ClaimVerificationInput(
+                            memory_id=memory.id,
+                            evidence_source_id=source.id,
+                            expected_fingerprint=request_fingerprint(state, memory, source),
+                            evidence_reference=operation.evidence_reference,
+                            method="official_record",
+                            independently_checked=True,
+                            reason="Explicit synthetic evidence check",
+                            expires_at=now() + timedelta(hours=24),
+                        ),
+                        reviewer,
+                    )
                 elif isinstance(operation, GrantScope):
                     guard.grant(
                         GrantInput(
@@ -262,6 +280,9 @@ def evaluate(dataset: Dataset, encoder: Encoder | None = None) -> dict:
                 Path(__file__).parents[1].joinpath("engine.py").read_bytes()
             ).hexdigest(),
             "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            "verification_sha256": hashlib.sha256(
+                Path(__file__).parents[1].joinpath("verification.py").read_bytes()
+            ).hexdigest(),
             "context_review_sha256": hashlib.sha256(
                 Path(__file__).parents[1].joinpath("context_review.py").read_bytes()
             ).hexdigest(),

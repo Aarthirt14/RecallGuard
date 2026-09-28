@@ -455,3 +455,93 @@ test("a stale informational review cannot approve revoked content", async (t) =>
   assert.match(a.q("#action-content .error").textContent, /not eligible/);
   assert.equal((await a.state()).context_reviews.length, 0);
 });
+
+test("independent claim verification enables only a separate evidence-bound grant and can be withdrawn", async (t) => {
+  const a = await app(t);
+  const headers = { "X-API-Key": reviewer, "Content-Type": "application/json" };
+  const source = await fetch(`${a.url}/sources`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      id: "bank-record",
+      kind: "user",
+      locator: "fixture:independent-bank-record",
+    }),
+  });
+  assert.equal(source.status, 201);
+  const content = "Orion bank account is OR1234";
+  const created = await fetch(`${a.url}/memories`, {
+    method: "POST",
+    headers: { ...headers, "X-API-Key": "a".repeat(32) },
+    body: JSON.stringify({
+      content,
+      source_id: "invoice-file",
+      claim: {
+        entity: "supplier:Orion",
+        attribute: "bank_account",
+        value: "OR1234",
+      },
+    }),
+  });
+  assert.equal(created.status, 201);
+  const memory = await created.json();
+  await a.connect();
+  await a.navigate("memories");
+  a.click(content);
+  assert.equal(
+    [...a.q("#detail-content").querySelectorAll("button")].find(
+      (b) => b.textContent === "Grant action scope",
+    ).disabled,
+    true,
+  );
+  a.click("Record independent verification");
+  a.q("#field-evidence-source").value = "bank-record";
+  a.q("#field-evidence-source").dispatchEvent(new a.w.Event("change"));
+  assert.match(
+    a.q("#action-content").textContent,
+    /fixture:independent-bank-record/,
+  );
+  a.q("#field-evidence-reference").value = "callback-log:Orion-001";
+  a.q("#field-method").value = "callback";
+  a.q("#field-reason").value = "Confirmed with separate contact";
+  a.q("#action-content form").requestSubmit();
+  assert.equal(
+    a.calls.filter((c) => c.path === "/claim-verifications").length,
+    0,
+  );
+  await a.submitDecision();
+  const verified = await a.state();
+  const verification = verified.claim_verifications.find(
+    (v) => v.memory_id === memory.id,
+  );
+  assert.equal(verification.evidence_source_id, "bank-record");
+  assert.equal(
+    verified.grants.some((g) => g.memory_id === memory.id),
+    false,
+  );
+  a.click(content);
+  a.click("Grant action scope");
+  a.q("#field-action").value = "payment";
+  a.q("#field-target").value = "supplier:Orion";
+  await a.submitDecision();
+  const granted = await a.state();
+  assert.equal(
+    granted.grants.find((g) => g.memory_id === memory.id).claim_verification_id,
+    verification.id,
+  );
+  a.click(content);
+  a.click("Withdraw claim verification");
+  await a.submitDecision();
+  const after = await a.state();
+  assert.equal(after.claim_verification_options[memory.id].current_id, null);
+  const retrieved = await fetch(`${a.url}/retrieve`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      query: "Orion",
+      action: "payment",
+      target: "supplier:Orion",
+    }),
+  });
+  assert.equal((await retrieved.json()).allowed.length, 0);
+});

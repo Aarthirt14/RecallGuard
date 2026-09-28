@@ -6,6 +6,7 @@ import sys
 from datetime import timedelta
 
 import uvicorn
+from verification_support import verify_claim
 
 from recallguard.api import Settings, create_app
 from recallguard.engine import RecallGuard
@@ -53,6 +54,7 @@ def fixture_app():
     guard.remember(
         MemoryInput(content="Shipment arrives on Thursday", source_id="supplier-web"), agent
     )
+    verify_claim(guard, root.id, reviewer)
     guard.grant(
         GrantInput(
             memory_id=root.id,
