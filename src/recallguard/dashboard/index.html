@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>RecallGuard · Security workspace</title>
+    <link rel="icon" href="/dashboard/assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/dashboard/assets/dashboard.css" />
+    <script type="module" src="/dashboard/assets/dashboard.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <section
+      id="connect-screen"
+      class="connect-screen"
+      aria-labelledby="connect-title"
+    >
+      <div class="welcome">
+        <div class="brand">
+          <img
+            src="/dashboard/assets/mark.svg"
+            alt=""
+            width="36"
+            height="36"
+          /><span>RecallGuard</span>
+        </div>
+        <div class="welcome-copy">
+          <p class="eyebrow">MEMORY SECURITY / REVIEW WORKSPACE</p>
+          <h1>Memory needs<br />a paper trail.</h1>
+          <p>
+            Understand what your agent remembers, where it came from, and what
+            it is allowed to influence.
+          </p>
+        </div>
+        <div class="welcome-footer">
+          <span>01 &nbsp; Trace origins</span
+          ><span>02 &nbsp; Review permissions</span
+          ><span>03 &nbsp; Keep the record</span>
+        </div>
+      </div>
+      <div class="connect-panel">
+        <form id="connect-form" class="connect-form">
+          <p class="eyebrow">REVIEWER ACCESS</p>
+          <h2 id="connect-title">Open your workspace</h2>
+          <p class="muted">
+            Connect to the RecallGuard service running at this address.
+          </p>
+          <label for="reviewer-key">Reviewer API key</label>
+          <input
+            id="reviewer-key"
+            type="password"
+            required
+            minlength="32"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="Enter your reviewer key"
+          />
+          <p class="field-note">
+            Kept only in this tab’s memory. Refreshing or disconnecting clears
+            your session.
+          </p>
+          <button class="primary" type="submit">
+            Connect to workspace <span aria-hidden="true">→</span>
+          </button>
+          <p id="connect-error" class="error" role="alert"></p>
+          <div class="access-note">
+            <strong>A separate review boundary</strong>
+            <p>
+              Agent credentials cannot open this workspace. Keep your reviewer
+              key outside agent prompts and tools.
+            </p>
+          </div>
+        </form>
+      </div>
+    </section>
+    <div id="workspace" class="workspace" hidden>
+      <aside class="sidebar">
+        <div class="brand">
+          <img
+            src="/dashboard/assets/mark.svg"
+            alt=""
+            width="30"
+            height="30"
+          /><span>RecallGuard</span>
+        </div>
+        <p class="brand-sub">MEMORY SECURITY</p>
+        <p class="nav-label">WORKSPACE</p>
+        <nav aria-label="Main navigation">
+          <button data-page="overview">
+            <span aria-hidden="true">◈</span>Overview
+          </button>
+          <button data-page="memories">
+            <span aria-hidden="true">▤</span>Memories
+            <span id="memory-nav-count" class="nav-count"></span>
+          </button>
+          <button data-page="payments">
+            <span aria-hidden="true">◇</span>Payment review
+            <span id="payment-nav-count" class="nav-count"></span>
+          </button>
+          <button data-page="retrieval">
+            <span aria-hidden="true">⌕</span>Retrieval lab
+          </button>
+          <button data-page="activity">
+            <span aria-hidden="true">≡</span>Audit log
+          </button>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="reviewer-avatar" aria-hidden="true">R</div>
+          <div>
+            <strong>Reviewer</strong
+            ><small id="storage-label">Connected workspace</small>
+          </div>
+          <button
+            id="disconnect"
+            class="icon-button"
+            aria-label="Disconnect"
+            title="Disconnect"
+          >
+            ↗
+          </button>
+        </div>
+      </aside>
+      <div class="workspace-body">
+        <header class="topbar">
+          <div>
+            Workspace <span aria-hidden="true">/</span>
+            <strong id="breadcrumb">Overview</strong>
+          </div>
+          <div class="sync">
+            <span id="sync-label">Connecting</span
+            ><button id="refresh" class="secondary">↻ &nbsp; Refresh</button>
+          </div>
+        </header>
+        <div id="notice" class="notice" role="status" hidden></div>
+        <main id="main" tabindex="-1"></main>
+        <footer class="page-footer">
+          <span>Origin stays with the memory.</span
+          ><span>Snapshot view · Permissions rechecked on every action</span>
+        </footer>
+      </div>
+    </div>
+    <dialog id="detail-dialog" aria-labelledby="detail-title">
+      <div class="dialog-head">
+        <p class="eyebrow" id="detail-kind">MEMORY RECORD</p>
+        <button
+          class="icon-button"
+          id="close-detail"
+          aria-label="Close details"
+        >
+          ×
+        </button>
+      </div>
+      <div id="detail-content"></div>
+    </dialog>
+    <dialog id="action-dialog" aria-labelledby="action-title">
+      <div class="dialog-head">
+        <p class="eyebrow">REVIEW DECISION</p>
+        <button class="icon-button" id="close-action" aria-label="Close action">
+          ×
+        </button>
+      </div>
+      <div id="action-content"></div>
+    </dialog>
+    <noscript
+      >This workspace requires JavaScript. You can also use the authenticated
+      API at /docs.</noscript
+    >
+  </body>
+</html>

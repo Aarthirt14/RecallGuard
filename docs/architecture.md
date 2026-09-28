@@ -75,7 +75,7 @@ All operations currently serialize per workspace and load all workspace records,
 
 1. **Implemented:** deterministic core, credential boundary, persistent records, tests, runnable poisoning example.
 2. **Implemented:** LangGraph observation adapter with mandatory summary lineage, optional chat-model summarizer, tool-time eligibility rechecks, exact transaction review, and simulated procurement actions. Hosted-model evaluation and real network adapters remain future work.
-3. **Partly implemented:** local embeddings, exact cosine retrieval, and reviewer-only backfill. See [semantic retrieval](semantic-retrieval.md). Indexed Neo4j retrieval, a human review UI, and explicit conflict resolution remain future work; no silent promotions.
+3. **Partly implemented:** local embeddings, exact cosine retrieval, and reviewer-only backfill. See [semantic retrieval](semantic-retrieval.md). A [reviewer dashboard](dashboard.md) now supports lineage inspection, scoped grants, revocation, payment review, retrieval checks, and audit history. Indexed Neo4j retrieval and explicit conflict resolution remain future work; no silent promotions.
 4. **Repair and evaluation:** independently supported claim reconstruction, benchmark adapter, naive and LLM-filter baselines, utility/security metrics with confidence intervals.
 
 Do not call test fixture outcomes an attack-success benchmark. A passing deterministic test proves only the specified invariant for those inputs.

@@ -2,7 +2,7 @@
 
 Origin-bound memory controls for AI agents. Preserve where a memory came from, keep its restrictions through summaries, and decide whether it may influence the current action.
 
-**Status: security core, LangGraph procurement workflow, simulated payment gate, and local semantic retrieval implemented.** This is a research foundation, not a production prompt-injection defense. No benchmark accuracy or novelty claims are made.
+**Status: security core, LangGraph procurement workflow, simulated payment gate, local semantic retrieval, and reviewer dashboard implemented.** This is a research foundation, not a production prompt-injection defense. No benchmark accuracy or novelty claims are made.
 
 ## What works
 
@@ -17,10 +17,15 @@ Origin-bound memory controls for AI agents. Preserve where a memory came from, k
 - Conservative descendant revocation, including invalidation of existing grants at retrieval time.
 - Atomic Neo4j persistence and an explicitly ephemeral in-memory development store.
 - Authenticated FastAPI API, OpenAPI explorer, poisoning example, security tests, and CI.
+- Same-origin reviewer dashboard for memory lineage, grants, revocation, payment review, retrieval checks, and audit history.
 - Optional local MiniLM semantic retrieval, versioned content-bound vectors, reviewer backfill, and exact cosine ranking with live policy checks.
 - LangGraph observation, payment-planning, and execution workflows with persisted session-labelled traces.
 - Source summaries with adapter-bound lineage; an offline summarizer and an optional LangChain chat-model adapter.
 - Reviewer-registered suppliers and immutable invoices, exact-payment review, fresh execution-time permission checks, and idempotent simulated receipts.
+
+## Open the reviewer dashboard
+
+After starting the API, open [the dashboard](http://localhost:8000/dashboard) and connect with your reviewer key. It reads the running backend and keeps credentials only in tab memory. See [dashboard usage and limits](docs/dashboard.md). No separate frontend build or Node server is needed.
 
 ## Enable semantic retrieval
 
@@ -75,7 +80,7 @@ python scripts/init_env.py
 docker compose up --build
 ```
 
-Open [API explorer](http://localhost:8000/docs), [health](http://localhost:8000/health), and [Neo4j Browser](http://localhost:7474). The generated `.env` contains distinct agent and reviewer keys and the database password. It is excluded from Git and Docker build context. Keep it private. Compose loads it automatically. This setup binds host ports to loopback.
+Open [the dashboard](http://localhost:8000/dashboard), [API explorer](http://localhost:8000/docs), [health](http://localhost:8000/health), and [Neo4j Browser](http://localhost:7474). The generated `.env` contains distinct agent and reviewer keys and the database password. It is excluded from Git and Docker build context. Keep it private. Compose loads it automatically. This setup binds host ports to loopback.
 
 In `/docs`, click **Authorize** and paste a key from your local `.env`. Use the reviewer key to register sources and review records, and the agent key to test ingestion and retrieval. The reviewer key must never be handed to the agent or included in model context.
 
@@ -125,6 +130,7 @@ All protected requests use `X-API-Key`.
 | `GET /embeddings/status`, `POST /embeddings/reindex` | Reviewer | Inspect coverage and backfill the configured embedding model |
 | `POST /grants` | Reviewer | Approve a specific memory/action/target until expiry |
 | `POST /memories/{id}/revoke` | Reviewer | Revoke a root and every descendant |
+| `GET /review` | Reviewer | Read a consistent dashboard snapshot and current restrictions |
 | `GET /memories`, `/graph`, `/audit` | Reviewer | Inspect the security state |
 
 1. Register a source using the reviewer key:
@@ -174,9 +180,10 @@ The current store is single-workspace. Neo4j operations serialize on a workspace
 - Memory grants permit influence until expiry; they are reusable and not transaction approval tokens. Simulator transaction approvals are separate and single-execution per invoice.
 - The LangGraph workflow is a fixed procurement workflow, not an open-ended autonomous planner. The optional chat-model adapter is dependency-injected; no hosted provider is configured or evaluated.
 - Session IDs label runs; they are not identity or tenant boundaries. Business records persist in Neo4j, while graph invocations have no checkpoint/replay service. A crashed observation can leave a root without a summary; repeating observation may create duplicate informational records. Payment retries remain idempotent.
-- No Next.js dashboard, MPBench adapter, LLM-filter baseline, or published evaluation results yet.
+- The dashboard is plain JavaScript served by FastAPI, not Next.js. It has no individual reviewer accounts, conflict-resolution workflow, or server-side pagination.
+- No MPBench adapter, LLM-filter baseline, or published evaluation results yet.
 
-Next: add a security dashboard, indexed candidate retrieval, and reproducible benchmark comparisons. Verify benchmark availability and licenses before importing datasets. Extending the simulated gate to a real payment provider requires a separate durable outbox and provider idempotency design; a database transaction cannot atomically commit an external bank transfer.
+Next: add indexed candidate retrieval and reproducible benchmark comparisons; extend review with explicit conflict resolution. Verify benchmark availability and licenses before importing datasets. Extending the simulated gate to a real payment provider requires a separate durable outbox and provider idempotency design; a database transaction cannot atomically commit an external bank transfer.
 
 See [architecture and threat model](docs/architecture.md) for the invariants and acceptance cases.
 
@@ -188,6 +195,6 @@ python -m ruff format --check .
 python -m pytest -q
 ```
 
-The Neo4j integration tests are skipped unless `NEO4J_TEST_URI` and `NEO4J_TEST_PASSWORD` are set. They use random namespaces and clean up only those namespaces. They cover core persistence and the agent/review/payment lifecycle across reconnects, including concurrent execution and revoked evidence. GitHub Actions provisions Neo4j and runs them alongside the unit and API tests and both examples. A separate job runs the optional real-model smoke test.
+The Neo4j integration tests are skipped unless `NEO4J_TEST_URI` and `NEO4J_TEST_PASSWORD` are set. They use random namespaces and clean up only those namespaces. They cover core persistence and the agent/review/payment lifecycle across reconnects, including concurrent execution and revoked evidence. GitHub Actions provisions Neo4j and runs them alongside the unit and API tests and both examples. Separate jobs run the optional real-model smoke test and the dashboard DOM/API integration suite. See [dashboard checks](docs/dashboard.md) for the Node development commands and browser-verification limits.
 
 Implementation references: [FastAPI security](https://fastapi.tiangolo.com/reference/security/), [FastAPI tests](https://fastapi.tiangolo.com/tutorial/testing/), [Neo4j managed transactions](https://neo4j.com/docs/python-manual/current/transactions/).
