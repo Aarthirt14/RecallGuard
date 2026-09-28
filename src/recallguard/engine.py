@@ -4,11 +4,19 @@ import hashlib
 import re
 from datetime import timedelta
 
+from recallguard.context_review import (
+    current_review,
+    review_blockers,
+    review_fingerprint,
+    review_request_fingerprint,
+)
 from recallguard.embeddings import EmbeddingError, Encoder, encode_checked, find_record, make_record
 from recallguard.models import (
     Action,
     AuditEvent,
     BlockedMemory,
+    ContextReview,
+    ContextReviewInput,
     Grant,
     GrantInput,
     Memory,
@@ -98,11 +106,14 @@ def blocked_reasons(state: State, memory: Memory) -> list[str]:
     return reasons
 
 
-def action_blocked_reasons(
+def action_decision(
     state: State, memory: Memory, action: Action, target: str | None
-) -> list[str]:
-    """Shared by retrieval and the tool gate; no cached permission decisions."""
+) -> tuple[list[str], ContextReview | None]:
+    """Return one live decision and the exact review used for that decision."""
     reasons = blocked_reasons(state, memory)
+    review = current_review(state, memory) if action == Action.INFORM else None
+    if review is not None:
+        return [], review
     if action != Action.INFORM and not any(
         g.memory_id == memory.id
         and g.memory_hash == memory.content_hash
@@ -112,7 +123,14 @@ def action_blocked_reasons(
         for g in state.grants.values()
     ):
         reasons.append("scoped_approval_required")
-    return reasons
+    return reasons, None
+
+
+def action_blocked_reasons(
+    state: State, memory: Memory, action: Action, target: str | None
+) -> list[str]:
+    """Shared by reviewer projections and the tool gate; no cached permissions."""
+    return action_decision(state, memory, action, target)[0]
 
 
 class RecallGuard:
@@ -220,6 +238,62 @@ class RecallGuard:
 
         return self.store.transact(operation)
 
+    def review_context(self, data: ContextReviewInput, actor: Principal) -> ContextReview:
+        require_reviewer(actor)
+
+        def operation(state):
+            memory = get_memory(state, data.memory_id)
+            if review_blockers(memory):
+                raise GuardError("Memory is not eligible for informational review", 409)
+            if data.expected_fingerprint != review_request_fingerprint(state, memory):
+                raise GuardError("Memory or policy changed; refresh before reviewing", 409)
+            if not now() < data.expires_at <= now() + timedelta(hours=24):
+                raise GuardError("Review expiry must be in the next 24 hours", 422)
+            if current_review(state, memory) is not None:
+                raise GuardError("An informational review is already effective", 409)
+            review = ContextReview(
+                **data.model_dump(),
+                reviewed_by=actor.id,
+                memory_fingerprint=review_fingerprint(memory),
+            )
+            state.context_reviews[review.id] = review
+            audit(
+                state,
+                actor,
+                "context_review_issued",
+                [memory.id, review.id],
+                fingerprint=review.expected_fingerprint,
+                expires_at=review.expires_at.isoformat(),
+                reason=review.reason,
+            )
+            return review
+
+        return self.store.transact(operation)
+
+    def withdraw_context_review(
+        self, review_id: str, reason: str, actor: Principal
+    ) -> ContextReview:
+        require_reviewer(actor)
+
+        def operation(state):
+            review = state.context_reviews.get(review_id)
+            if review is None:
+                raise GuardError("Informational review not found", 404)
+            if review.withdrawn_at is None:
+                review.withdrawn_at = now()
+                review.withdrawn_by = actor.id
+                review.withdrawal_reason = reason
+                audit(
+                    state,
+                    actor,
+                    "context_review_withdrawn",
+                    [review.memory_id, review.id],
+                    reason=reason,
+                )
+            return review
+
+        return self.store.transact(operation)
+
     def grant(self, data: GrantInput, actor: Principal) -> Grant:
         require_reviewer(actor)
 
@@ -275,15 +349,17 @@ class RecallGuard:
                         continue
                 candidates.append((score, memory))
             candidates.sort(key=lambda pair: (-pair[0], pair[1].id))
-            allowed, blocked, scores = [], [], {}
+            allowed, blocked, scores, context_reviews = [], [], {}, {}
             # Live policy filtering precedes top-k, including when vectors predate a revoke.
             for score, memory in candidates:
-                reasons = action_blocked_reasons(state, memory, data.action, data.target)
+                reasons, review = action_decision(state, memory, data.action, data.target)
                 if reasons:
                     blocked.append(BlockedMemory(memory_id=memory.id, reasons=reasons))
                 elif len(allowed) < data.limit:
                     allowed.append(memory)
                     scores[memory.id] = score
+                    if review is not None:
+                        context_reviews[memory.id] = review.id
             result = RetrievalResult(
                 allowed=allowed,
                 blocked=blocked[:100],
@@ -293,6 +369,7 @@ class RecallGuard:
                 model_id=self.encoder.model_id if mode == "semantic" else None,
                 scores=scores,
                 unindexed_count=unindexed,
+                context_reviews=context_reviews,
             )
             audit(
                 state,
@@ -306,6 +383,7 @@ class RecallGuard:
                 mode=mode,
                 model_id=result.model_id,
                 unindexed_count=unindexed,
+                context_reviews=context_reviews,
             )
             return result
 

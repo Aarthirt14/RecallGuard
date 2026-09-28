@@ -1,7 +1,13 @@
 """Reviewer-only projections. Each response is one consistent store snapshot."""
 
+from recallguard.context_review import current_review, review_blockers, review_request_fingerprint
 from recallguard.embeddings import find_record
-from recallguard.engine import RecallGuard, blocked_reasons, require_reviewer
+from recallguard.engine import (
+    RecallGuard,
+    action_blocked_reasons,
+    blocked_reasons,
+    require_reviewer,
+)
 from recallguard.models import Action, Principal, Status, now
 from recallguard.procurement import proposal_reasons
 
@@ -30,6 +36,19 @@ def review_snapshot(guard: RecallGuard, actor: Principal, backend: str) -> dict:
             "grants": list(state.grants.values()),
             "memory_restrictions": {
                 m.id: blocked_reasons(state, m) for m in state.memories.values()
+            },
+            "context_reviews": list(state.context_reviews.values()),
+            "context_review_options": {
+                m.id: {
+                    "fingerprint": review_request_fingerprint(state, m),
+                    "blockers": review_blockers(m),
+                    "effective_review_id": r.id if (r := current_review(state, m)) else None,
+                }
+                for m in state.memories.values()
+            },
+            "information_restrictions": {
+                m.id: action_blocked_reasons(state, m, Action.INFORM, None)
+                for m in state.memories.values()
             },
             "payments": sorted(
                 state.payments.values(), key=lambda p: (p.created_at, p.id), reverse=True

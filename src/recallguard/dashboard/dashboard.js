@@ -702,7 +702,7 @@ function showMemory(id) {
   if (restrictions(id).length)
     content.append(
       note(
-        `Restricted: ${restrictions(id).map(human).join("; ")}. Existing approvals cannot override these restrictions.`,
+        `Restricted: ${restrictions(id).map(human).join("; ")}. Action grants cannot override these restrictions.`,
         true,
       ),
     );
@@ -738,6 +738,64 @@ function showMemory(id) {
   }
   sources.append(sourceList);
   content.append(sources);
+  content.append(el("h3", "section-title", "Informational review"));
+  const option = snapshot.context_review_options[id];
+  content.append(
+    note(
+      "A reviewer may permit an overblocked direct-source record in informational retrieval only. This does not verify its claims, release quarantine, authorize tools, or permit derived summaries.",
+    ),
+  );
+  const reviewButton = button("Review for informational use", () =>
+    reviewInformation(m, option),
+  );
+  reviewButton.disabled =
+    option.blockers.length > 0 || Boolean(option.effective_review_id);
+  content.append(reviewButton);
+  if (option.blockers.length)
+    content.append(
+      el(
+        "p",
+        "field-note",
+        `Unavailable: ${option.blockers.map(human).join("; ")}.`,
+      ),
+    );
+  for (const r of snapshot.context_reviews.filter((r) => r.memory_id === id)) {
+    const row = el("div", "list-row"),
+      body = el("div");
+    const state = r.withdrawn_at
+      ? "withdrawn"
+      : new Date(r.expires_at) <= new Date(snapshot.captured_at)
+        ? "expired"
+        : option.effective_review_id === r.id
+          ? "effective for information"
+          : "invalidated";
+    body.append(
+      el("strong", "", human(state)),
+      el(
+        "p",
+        "",
+        `${r.reviewed_by} · Expires ${date(r.expires_at)} · ${r.reason}`,
+      ),
+    );
+    if (r.withdrawn_at)
+      body.append(
+        el(
+          "p",
+          "muted",
+          `Withdrawn ${date(r.withdrawn_at)} · ${r.withdrawal_reason}`,
+        ),
+      );
+    row.append(body);
+    if (!r.withdrawn_at)
+      row.append(
+        button(
+          "Withdraw informational review",
+          () => withdrawInformation(r),
+          "danger",
+        ),
+      );
+    content.append(row);
+  }
   content.append(el("h3", "section-title", "Action grants"));
   const grants = snapshot.grants.filter((g) => g.memory_id === id);
   if (!grants.length)
@@ -925,6 +983,54 @@ function grantMemory(m) {
       });
       return "Scoped grant issued. Descendants do not inherit this approval.";
     },
+  );
+}
+function reviewInformation(m, option) {
+  decisionDialog(
+    "Review informational context",
+    "Confirm that this exact text was overblocked. Other records and derived summaries remain restricted. The exception expires and can be withdrawn.",
+    "Approve informational use",
+    (grid) => {
+      const text = el("div", "content-box full", m.content);
+      grid.append(text);
+      if (m.claim)
+        grid.append(
+          note(
+            `Claim: ${m.claim.entity} / ${m.claim.attribute} = ${m.claim.value}`,
+          ),
+        );
+      const record = note(
+        `Memory ${m.id}\nReview fingerprint: ${option.fingerprint}`,
+      );
+      record.classList.add("full");
+      grid.append(record);
+      expiryFields(grid);
+    },
+    async (data) => {
+      await api("/context-reviews", {
+        memory_id: m.id,
+        expected_fingerprint: option.fingerprint,
+        reason: data.get("reason").trim(),
+        expires_at: expiry(data),
+      });
+      return "Informational review recorded. Quarantine and tool restrictions remain in place.";
+    },
+  );
+}
+function withdrawInformation(review) {
+  decisionDialog(
+    "Withdraw informational review",
+    "Stop using this exception for subsequent retrieval. Text already returned cannot be recalled.",
+    "Confirm withdrawal",
+    (grid) =>
+      grid.append(note(`Review ${review.id} for memory ${review.memory_id}`)),
+    async (data) => {
+      await api(`/context-reviews/${encodeURIComponent(review.id)}/withdraw`, {
+        reason: data.get("reason").trim(),
+      });
+      return "Informational review withdrawn. Future retrieval uses the current restrictions.";
+    },
+    true,
   );
 }
 function revokeMemory(m) {
@@ -1231,6 +1337,8 @@ function renderRetrieval() {
             `Score ${Number(result.scores[m.id]).toFixed(3)}`,
           ),
         );
+        if (result.context_reviews[m.id])
+          title.append(badge("reviewed exception", "amber"));
         card.append(
           title,
           el("p", "", m.content),

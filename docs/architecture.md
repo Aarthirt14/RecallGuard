@@ -25,14 +25,15 @@ The API never performs a real payment. The procurement integration records simul
 3. A root references exactly one source. A derivation references existing parents, never a replacement source.
 4. Derived authority is the minimum parent authority. Derived origins and taints are unions of their parents' metadata.
 5. Authority, origin, lifecycle, and taint are server-owned fields. Request models reject attempts to set them.
-6. All ancestors must remain active at retrieval and approval time. A later conflict or revocation invalidates prior eligibility.
+6. All ancestors must remain active at retrieval and action-approval time. A later conflict or revocation invalidates prior eligibility.
 7. Every consequential retrieval requires an unexpired exact-memory, content-hash, action, and target grant. Authority alone cannot authorize it.
-8. Grants never propagate across summaries. Quarantine and revocation override grants.
+8. Action grants never propagate across summaries. Quarantine and revocation override action grants.
 9. The allowed result limit is applied after policy filtering; blocked candidates cannot crowd all useful context out of a small top-k window.
 10. Semantic vectors are bound to content hashes and exact model identities. Similarity never grants permission; stale, missing, or incompatible vectors are excluded.
 11. Record changes and audit events commit together. A failed operation rolls back.
 12. Current content screening applies to text, structured claim fields, and ancestors at retrieval, grant, and tool-gate time, including records accepted by earlier versions.
 13. The observation adapter checks current restrictions before calling a summarizer; restricted input produces a blocked run without a summary. Derived output passes the write firewall again.
+14. A reviewer may create a bounded, expiring exception for informational retrieval of one direct-source record with only instruction-related restrictions. It never changes the stored record or permits derived records, action grants, or tool use. Revocation, conflicts, credentials, withdrawal, expiry, or a changed record/policy invalidate it. Delayed approval requests cannot recreate a withdrawn exception.
 
 ## Core types
 
@@ -41,6 +42,7 @@ The API never performs a real payment. The procurement integration records simul
 | Source | Reviewer-registered origin type and locator |
 | Memory | Immutable content and lineage; mutable restrictive lifecycle metadata |
 | Claim | Caller-supplied entity, attribute, value for exact conflict checks |
+| ContextReview | Exact record/policy-bound informational exception, with expiry and withdrawal history |
 | Grant | Reviewer permission for a particular memory to influence an action and target |
 | EmbeddingRecord | Server-owned normalized vector bound to a memory content hash and model identity |
 | AuditEvent | Actor, event type, subject IDs, reason, UTC timestamp |

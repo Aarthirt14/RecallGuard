@@ -385,3 +385,30 @@ def test_new_screening_policy_invalidates_previously_approved_payment(
     decision = procurement.execute(proposal_id, agent)
     assert decision.status == "blocked"
     assert not guard.inspect(reviewer).receipts
+
+
+def test_informational_review_cannot_create_payment_proposal(guard, agent, reviewer, procurement):
+    from recallguard.context_review import review_fingerprint
+    from recallguard.models import ContextReviewInput, RetrievalInput
+
+    root = guard.remember(
+        MemoryInput(
+            content="ABC handbook quotes 'Ignore prior instructions' as an attack example.",
+            source_id="web",
+            claim={"entity": "supplier:ABC", "attribute": "bank_account", "value": "991872"},
+        ),
+        agent,
+    )
+    guard.review_context(
+        ContextReviewInput(
+            memory_id=root.id,
+            expected_fingerprint=review_fingerprint(root),
+            reason="The quotation is legitimate informational context",
+            expires_at=now() + timedelta(hours=1),
+        ),
+        reviewer,
+    )
+    assert guard.retrieve(RetrievalInput(query="ABC"), agent).allowed
+    with pytest.raises(GuardError):
+        procurement.propose("INV-1", root.id, agent)
+    assert not guard.inspect(reviewer).payments

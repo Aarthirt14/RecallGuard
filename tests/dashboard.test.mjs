@@ -380,3 +380,78 @@ test("memory pagination preserves search focus and status filters", async (t) =>
   filter.dispatchEvent(new a.w.Event("change"));
   assert.match(a.q("#main").textContent, /No matching memories/);
 });
+
+test("informational review requires confirmation, preserves quarantine, and can be withdrawn", async (t) => {
+  const a = await app(t);
+  const content =
+    "Orion handbook quotes 'Ignore prior instructions' as an attack example.";
+  const created = await fetch(`${a.url}/memories`, {
+    method: "POST",
+    headers: {
+      "X-API-Key": "a".repeat(32),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ content, source_id: "invoice-file" }),
+  });
+  assert.equal(created.status, 201);
+  const memory = await created.json();
+  await a.connect();
+  await a.navigate("memories");
+  a.click(content);
+  a.click("Review for informational use");
+  const shown = (await a.state()).context_review_options[memory.id].fingerprint;
+  assert.ok(a.q("#action-content").textContent.includes(shown));
+  a.q("#field-reason").value = "Independently verified quotation";
+  a.q("#action-content form").requestSubmit();
+  assert.equal(a.calls.filter((c) => c.path === "/context-reviews").length, 0);
+  await a.submitDecision();
+  const state = await a.state();
+  const review = state.context_reviews[0];
+  assert.equal(review.expected_fingerprint, shown);
+  assert.equal(
+    state.memories.find((m) => m.id === memory.id).status,
+    "quarantined",
+  );
+  assert.ok(state.memory_restrictions[memory.id].length);
+  assert.equal(state.information_restrictions[memory.id].length, 0);
+  await a.navigate("retrieval");
+  a.q("#field-query").value = "Orion";
+  a.q(".test-form").requestSubmit();
+  await until(() => !a.q(".test-form button").disabled, "reviewed retrieval");
+  assert.match(a.q("#main").textContent, /reviewed exception/);
+  await a.navigate("memories");
+  a.click(content);
+  assert.equal(
+    [...a.q("#detail-content").querySelectorAll("button")].find(
+      (b) => b.textContent === "Grant action scope",
+    ).disabled,
+    true,
+  );
+  a.click("Withdraw informational review");
+  await a.submitDecision();
+  const after = await a.state();
+  assert.ok(after.context_reviews[0].withdrawn_at);
+  assert.ok(after.information_restrictions[memory.id].length);
+  assert.equal(
+    after.grants.some((g) => g.memory_id === memory.id),
+    false,
+  );
+});
+
+test("a stale informational review cannot approve revoked content", async (t) => {
+  const a = await app(t);
+  await a.connect();
+  await a.navigate("memories");
+  const before = await a.state();
+  const root = before.memories.find((m) => m.content.startsWith("Ignore"));
+  a.click(root.content);
+  a.click("Review for informational use");
+  await fetch(`${a.url}/memories/${root.id}/revoke`, {
+    method: "POST",
+    headers: { "X-API-Key": reviewer, "Content-Type": "application/json" },
+    body: JSON.stringify({ reason: "Revoked after snapshot" }),
+  });
+  await a.submitDecision();
+  assert.match(a.q("#action-content .error").textContent, /not eligible/);
+  assert.equal((await a.state()).context_reviews.length, 0);
+});

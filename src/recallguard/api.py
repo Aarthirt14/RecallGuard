@@ -16,6 +16,8 @@ from recallguard.agent import ProcurementAgent
 from recallguard.embeddings import Encoder, LocalMiniLMEncoder
 from recallguard.engine import GuardError, RecallGuard
 from recallguard.models import (
+    ContextReview,
+    ContextReviewInput,
     Grant,
     GrantInput,
     Memory,
@@ -118,7 +120,7 @@ def create_app(
 
     app = FastAPI(
         title="RecallGuard",
-        version="0.6.0",
+        version="0.7.0",
         lifespan=lifespan,
         description="Origin-bound memory controls. This API does not execute external actions.",
     )
@@ -188,6 +190,14 @@ def create_app(
     @app.post("/grants", response_model=Grant, status_code=201)
     def grant(data: GrantInput, actor: Actor):
         return app.state.guard.grant(data, actor)
+
+    @app.post("/context-reviews", response_model=ContextReview, status_code=201)
+    def review_context(data: ContextReviewInput, actor: Actor):
+        return app.state.guard.review_context(data, actor)
+
+    @app.post("/context-reviews/{review_id}/withdraw", response_model=ContextReview)
+    def withdraw_context_review(review_id: str, data: RevokeInput, actor: Actor):
+        return app.state.guard.withdraw_context_review(review_id, data.reason, actor)
 
     @app.get("/embeddings/status")
     def embedding_status(actor: Actor):

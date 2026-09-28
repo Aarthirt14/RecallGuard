@@ -262,6 +262,9 @@ def evaluate(dataset: Dataset, encoder: Encoder | None = None) -> dict:
                 Path(__file__).parents[1].joinpath("engine.py").read_bytes()
             ).hexdigest(),
             "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            "context_review_sha256": hashlib.sha256(
+                Path(__file__).parents[1].joinpath("context_review.py").read_bytes()
+            ).hexdigest(),
             "screening_sha256": hashlib.sha256(
                 Path(__file__).parents[1].joinpath("screening.py").read_bytes()
             ).hexdigest(),

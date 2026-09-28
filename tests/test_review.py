@@ -142,3 +142,57 @@ def test_embedding_projection_excludes_vectors(reviewer, agent):
         assert "vector" not in data["embeddings"] and "embeddings" not in data["memories"][0]
         guard.revoke(memory.id, "source withdrawn", reviewer)
         assert client.get("/review", headers=REVIEWER).json()["embeddings"]["eligible"] == 0
+
+
+def test_informational_review_api_is_scoped_authenticated_and_withdrawable(
+    client, guard, reviewer, agent
+):
+    root = guard.remember(
+        MemoryInput(
+            content="Orion handbook quotes 'Ignore prior instructions' as an attack example.",
+            source_id="web",
+        ),
+        agent,
+    )
+    snapshot = client.get("/review", headers=REVIEWER).json()
+    data = {
+        "memory_id": root.id,
+        "expected_fingerprint": snapshot["context_review_options"][root.id]["fingerprint"],
+        "expires_at": (now() + timedelta(hours=1)).isoformat(),
+        "reason": "Confirmed this is a benign handbook quotation",
+    }
+    for headers, expected in [({}, 401), (AGENT, 403)]:
+        assert client.post("/context-reviews", headers=headers, json=data).status_code == expected
+    assert (
+        client.post(
+            "/context-reviews", headers=REVIEWER, json={**data, "action": "payment"}
+        ).status_code
+        == 422
+    )
+    approved = client.post("/context-reviews", headers=REVIEWER, json=data)
+    assert approved.status_code == 201
+    assert approved.headers["cache-control"] == "no-store"
+    review_id = approved.json()["id"]
+    retrieved = client.post("/retrieve", headers=AGENT, json={"query": "Orion"}).json()
+    assert retrieved["context_reviews"] == {root.id: review_id}
+    assert retrieved["allowed"][0]["status"] == "quarantined"
+    payment = client.post(
+        "/retrieve",
+        headers=AGENT,
+        json={
+            "query": "Orion",
+            "action": "payment",
+            "target": "supplier:Orion",
+        },
+    ).json()
+    assert not payment["allowed"] and not payment["context_reviews"]
+    path = f"/context-reviews/{review_id}/withdraw"
+    assert (
+        client.post(path, headers=AGENT, json={"reason": "Withdrawal attempt"}).status_code == 403
+    )
+    assert (
+        client.post(path, headers=REVIEWER, json={"reason": "Withdrawn by reviewer"}).status_code
+        == 200
+    )
+    assert not client.post("/retrieve", headers=AGENT, json={"query": "Orion"}).json()["allowed"]
+    assert client.post("/context-reviews", headers=REVIEWER, json=data).status_code == 409

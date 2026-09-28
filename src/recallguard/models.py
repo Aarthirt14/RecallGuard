@@ -138,6 +138,29 @@ class Grant(GrantInput):
     created_at: datetime = Field(default_factory=now)
 
 
+class ContextReviewInput(Model):
+    memory_id: Identifier
+    expected_fingerprint: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
+    reason: Annotated[str, Field(min_length=5, max_length=2000)]
+    expires_at: datetime
+
+    @model_validator(mode="after")
+    def timezone_required(self):
+        if self.expires_at.tzinfo is None:
+            raise ValueError("expires_at must include a timezone")
+        return self
+
+
+class ContextReview(ContextReviewInput):
+    memory_fingerprint: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
+    id: str = Field(default_factory=new_id)
+    reviewed_by: str
+    created_at: datetime = Field(default_factory=now)
+    withdrawn_at: datetime | None = None
+    withdrawn_by: str | None = None
+    withdrawal_reason: str | None = None
+
+
 class RetrievalInput(Model):
     query: Annotated[str, Field(min_length=1, max_length=2000)]
     action: Action = Action.INFORM
@@ -167,6 +190,8 @@ class RetrievalResult(Model):
     model_id: str | None = None
     scores: dict[str, float] = Field(default_factory=dict)
     unindexed_count: int = 0
+    # Exact review IDs used for exceptional informational admission, never action grants.
+    context_reviews: dict[str, str] = Field(default_factory=dict)
 
 
 class ReindexInput(Model):

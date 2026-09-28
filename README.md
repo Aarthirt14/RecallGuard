@@ -10,6 +10,7 @@ Origin-bound memory controls for AI agents. Preserve where a memory came from, k
 - Memory records with content hashes, source origins, parent links, authority ceilings, taint labels, lifecycle status, and decision reasons.
 - Derived memories inherit the lowest parent authority and the union of parent taints.
 - Agent credentials cannot create trusted roots, register sources, issue approvals, revoke memories, or read raw management endpoints.
+- Expiring, withdrawable [informational reviews](docs/informational-review.md) for overblocked direct-source records, without releasing quarantine or authorizing tools.
 - Context screening for behavior-changing directives, common encoded wrappers, and instructions or credential assignments in structured claim fields. Live checks also cover older memories and their ancestors.
 - Conflict detection for explicitly supplied entity/attribute/value claims.
 - Retrieval checks lifecycle, all ancestors, conflicts, and exact action/target approvals before returning context.
