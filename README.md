@@ -19,6 +19,7 @@ Origin-bound memory controls for AI agents. Preserve where a memory came from, k
 - Conservative descendant revocation, including invalidation of existing grants at retrieval time.
 - Atomic Neo4j persistence and an explicitly ephemeral in-memory development store.
 - Authenticated FastAPI API, OpenAPI explorer, poisoning example, security tests, and CI.
+- Pinned, offline [external-material audit](docs/external-context-audit.md) using all 6,240 MPBench rows, with source attribution, integrity checks and explicit protocol limits.
 - Same-origin reviewer dashboard for memory lineage, grants, revocation, payment review, retrieval checks, and audit history.
 - Optional local MiniLM semantic retrieval, versioned content-bound vectors, reviewer backfill, and exact cosine ranking with live policy checks.
 - LangGraph observation, payment-planning, and execution workflows with persisted session-labelled traces.
@@ -191,9 +192,9 @@ The current store is single-workspace. Neo4j operations serialize on a workspace
 - The LangGraph workflow is a fixed procurement workflow, not an open-ended autonomous planner. The optional chat-model adapter is dependency-injected; no hosted provider is configured or evaluated.
 - Session IDs label runs; they are not identity or tenant boundaries. Business records persist in Neo4j, while graph invocations have no checkpoint/replay service. A crashed observation can leave a root without a summary; repeating observation may create duplicate informational records. Payment retries remain idempotent.
 - The dashboard is plain JavaScript served by FastAPI, not Next.js. It has no individual reviewer accounts or server-side pagination.
-- The offline evaluation uses original synthetic fixtures and minimal retrieval ablations. No MPBench adapter, hosted LLM-filter baseline, or published benchmark results yet.
+- Evaluation includes synthetic workflow checks and a pinned MPBench external-material audit. The latter forces raw-context ingestion and does not reproduce MPBench agent behavior or its ASR/RSR metrics. A full agent harness, hosted LLM-filter baseline and representative behavior evaluation remain unfinished.
 
-Next: add indexed candidate retrieval, a justified external-benchmark adapter, and selective repair backed by independent support. The offline runner now provides reproducible context-level comparisons. Verify benchmark availability and licenses before importing datasets. Extending the simulated gate to a real payment provider requires a separate durable outbox and provider idempotency design; a database transaction cannot atomically commit an external bank transfer.
+Next: add indexed candidate retrieval, an external agent-behavior evaluation harness, and selective repair backed by independent support. The offline runners provide reproducible synthetic and external-material admission comparisons. Extending the simulated gate to a real payment provider requires a separate durable outbox and provider idempotency design; a database transaction cannot atomically commit an external bank transfer.
 
 See [architecture and threat model](docs/architecture.md) for the invariants and acceptance cases.
 

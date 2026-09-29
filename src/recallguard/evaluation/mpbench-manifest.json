@@ -1,0 +1,11 @@
+{
+  "repository": "https://github.com/Digital-Trust-Lab/mp-bench",
+  "revision": "6886880a7c29625e0109e0ad91d0e095029f1577",
+  "license": "Apache-2.0",
+  "files": {
+    "adversarial_data.jsonl.jsonl": {"bytes": 7339100, "sha256": "f2d23a5a2d483889eb2fdd9a2a082f0759603bc0a17664814a7caafbd318f90d", "split": "adversarial", "rows": 3241},
+    "benign_data.jsonl.jsonl": {"bytes": 6564735, "sha256": "707ef7e311e147d9818a8a9e04293296fc6bf3390241e4cac23c8145765b62d5", "split": "benign", "rows": 2999},
+    "LICENSE": {"bytes": 11357, "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"},
+    "README.md": {"bytes": 2321, "sha256": "3e4563c3cf00e14da9d663fee2b94f6725f90fa09fe409311613fe719d5c8a3a"}
+  }
+}

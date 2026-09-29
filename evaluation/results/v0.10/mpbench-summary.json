@@ -1,0 +1,3254 @@
+{
+  "configuration": {
+    "expected_memory_used": false,
+    "external_actions_executed": false,
+    "ingestion": "forced external roots, no agent memory-selection step",
+    "input": "context and separate skill_md when present; skill_md is the target in skill cases",
+    "llm_invoked": false,
+    "retrieval": "lexical, one isolated row per workspace, limit=2, original retrieval_query only",
+    "source_kind": "web",
+    "text_filter": "frozen-v0.5-raw-content",
+    "user_query_executed": false
+  },
+  "groups": {
+    "adversarial": {
+      "attack_signal": {
+        "moderate": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 993,
+                "numerator": 581,
+                "rate": 0.5850956696878147
+              },
+              "eligible": {
+                "denominator": 1068,
+                "numerator": 627,
+                "rate": 0.5870786516853933
+              },
+              "query_returned": {
+                "denominator": 995,
+                "numerator": 581,
+                "rate": 0.5839195979899497
+              },
+              "withheld": {
+                "denominator": 1068,
+                "numerator": 441,
+                "rate": 0.41292134831460675
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 993,
+                "numerator": 615,
+                "rate": 0.6193353474320241
+              },
+              "eligible": {
+                "denominator": 1068,
+                "numerator": 680,
+                "rate": 0.6367041198501873
+              },
+              "query_returned": {
+                "denominator": 995,
+                "numerator": 615,
+                "rate": 0.6180904522613065
+              },
+              "withheld": {
+                "denominator": 1068,
+                "numerator": 388,
+                "rate": 0.36329588014981273
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 993,
+                "numerator": 993,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 1068,
+                "numerator": 1068,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 995,
+                "numerator": 993,
+                "rate": 0.9979899497487437
+              },
+              "withheld": {
+                "denominator": 1068,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 995,
+          "raw_lexical_candidates": 993,
+          "recallguard_write_states": {
+            "active": 627,
+            "credential_rejected": 16,
+            "quarantined": 425
+          },
+          "rows": 1068,
+          "unique_target_texts": 1068
+        },
+        "strong": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 998,
+                "numerator": 460,
+                "rate": 0.46092184368737477
+              },
+              "eligible": {
+                "denominator": 1084,
+                "numerator": 498,
+                "rate": 0.45940959409594095
+              },
+              "query_returned": {
+                "denominator": 999,
+                "numerator": 460,
+                "rate": 0.46046046046046046
+              },
+              "withheld": {
+                "denominator": 1084,
+                "numerator": 586,
+                "rate": 0.540590405904059
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 998,
+                "numerator": 436,
+                "rate": 0.43687374749499
+              },
+              "eligible": {
+                "denominator": 1084,
+                "numerator": 485,
+                "rate": 0.4474169741697417
+              },
+              "query_returned": {
+                "denominator": 999,
+                "numerator": 436,
+                "rate": 0.4364364364364364
+              },
+              "withheld": {
+                "denominator": 1084,
+                "numerator": 599,
+                "rate": 0.5525830258302583
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 998,
+                "numerator": 998,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 1084,
+                "numerator": 1084,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 999,
+                "numerator": 998,
+                "rate": 0.998998998998999
+              },
+              "withheld": {
+                "denominator": 1084,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 999,
+          "raw_lexical_candidates": 998,
+          "recallguard_write_states": {
+            "active": 498,
+            "credential_rejected": 29,
+            "quarantined": 557
+          },
+          "rows": 1084,
+          "unique_target_texts": 1084
+        },
+        "subtle": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 47,
+                "numerator": 24,
+                "rate": 0.5106382978723404
+              },
+              "eligible": {
+                "denominator": 130,
+                "numerator": 79,
+                "rate": 0.6076923076923076
+              },
+              "query_returned": {
+                "denominator": 47,
+                "numerator": 24,
+                "rate": 0.5106382978723404
+              },
+              "withheld": {
+                "denominator": 130,
+                "numerator": 51,
+                "rate": 0.3923076923076923
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 47,
+                "numerator": 24,
+                "rate": 0.5106382978723404
+              },
+              "eligible": {
+                "denominator": 130,
+                "numerator": 87,
+                "rate": 0.6692307692307692
+              },
+              "query_returned": {
+                "denominator": 47,
+                "numerator": 24,
+                "rate": 0.5106382978723404
+              },
+              "withheld": {
+                "denominator": 130,
+                "numerator": 43,
+                "rate": 0.33076923076923076
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 47,
+                "numerator": 47,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 130,
+                "numerator": 130,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 47,
+                "numerator": 47,
+                "rate": 1.0
+              },
+              "withheld": {
+                "denominator": 130,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 47,
+          "raw_lexical_candidates": 47,
+          "recallguard_write_states": {
+            "active": 79,
+            "credential_rejected": 9,
+            "quarantined": 42
+          },
+          "rows": 130,
+          "unique_target_texts": 130
+        },
+        "weak": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 956,
+                "numerator": 566,
+                "rate": 0.5920502092050209
+              },
+              "eligible": {
+                "denominator": 959,
+                "numerator": 569,
+                "rate": 0.5933263816475496
+              },
+              "query_returned": {
+                "denominator": 958,
+                "numerator": 566,
+                "rate": 0.5908141962421712
+              },
+              "withheld": {
+                "denominator": 959,
+                "numerator": 390,
+                "rate": 0.40667361835245047
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 956,
+                "numerator": 678,
+                "rate": 0.7092050209205021
+              },
+              "eligible": {
+                "denominator": 959,
+                "numerator": 680,
+                "rate": 0.7090719499478624
+              },
+              "query_returned": {
+                "denominator": 958,
+                "numerator": 678,
+                "rate": 0.7077244258872651
+              },
+              "withheld": {
+                "denominator": 959,
+                "numerator": 279,
+                "rate": 0.2909280500521376
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 956,
+                "numerator": 956,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 959,
+                "numerator": 959,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 958,
+                "numerator": 956,
+                "rate": 0.9979123173277662
+              },
+              "withheld": {
+                "denominator": 959,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 958,
+          "raw_lexical_candidates": 956,
+          "recallguard_write_states": {
+            "active": 569,
+            "credential_rejected": 11,
+            "quarantined": 379
+          },
+          "rows": 959,
+          "unique_target_texts": 959
+        }
+      },
+      "attack_type": {
+        "delayed_conditional_injection": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 33,
+                "numerator": 25,
+                "rate": 0.7575757575757576
+              },
+              "eligible": {
+                "denominator": 33,
+                "numerator": 25,
+                "rate": 0.7575757575757576
+              },
+              "query_returned": {
+                "denominator": 33,
+                "numerator": 25,
+                "rate": 0.7575757575757576
+              },
+              "withheld": {
+                "denominator": 33,
+                "numerator": 8,
+                "rate": 0.24242424242424243
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 33,
+                "numerator": 26,
+                "rate": 0.7878787878787878
+              },
+              "eligible": {
+                "denominator": 33,
+                "numerator": 26,
+                "rate": 0.7878787878787878
+              },
+              "query_returned": {
+                "denominator": 33,
+                "numerator": 26,
+                "rate": 0.7878787878787878
+              },
+              "withheld": {
+                "denominator": 33,
+                "numerator": 7,
+                "rate": 0.21212121212121213
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 33,
+                "numerator": 33,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 33,
+                "numerator": 33,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 33,
+                "numerator": 33,
+                "rate": 1.0
+              },
+              "withheld": {
+                "denominator": 33,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 33,
+          "raw_lexical_candidates": 33,
+          "recallguard_write_states": {
+            "active": 25,
+            "credential_rejected": 3,
+            "quarantined": 5
+          },
+          "rows": 33,
+          "unique_target_texts": 33
+        },
+        "delayed_conditional_injection_injection": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 561,
+                "numerator": 303,
+                "rate": 0.5401069518716578
+              },
+              "eligible": {
+                "denominator": 567,
+                "numerator": 307,
+                "rate": 0.5414462081128748
+              },
+              "query_returned": {
+                "denominator": 566,
+                "numerator": 303,
+                "rate": 0.5353356890459364
+              },
+              "withheld": {
+                "denominator": 567,
+                "numerator": 260,
+                "rate": 0.4585537918871252
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 561,
+                "numerator": 457,
+                "rate": 0.8146167557932263
+              },
+              "eligible": {
+                "denominator": 567,
+                "numerator": 462,
+                "rate": 0.8148148148148148
+              },
+              "query_returned": {
+                "denominator": 566,
+                "numerator": 457,
+                "rate": 0.8074204946996466
+              },
+              "withheld": {
+                "denominator": 567,
+                "numerator": 105,
+                "rate": 0.18518518518518517
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 561,
+                "numerator": 561,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 567,
+                "numerator": 567,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 566,
+                "numerator": 561,
+                "rate": 0.991166077738516
+              },
+              "withheld": {
+                "denominator": 567,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 566,
+          "raw_lexical_candidates": 561,
+          "recallguard_write_states": {
+            "active": 307,
+            "credential_rejected": 14,
+            "quarantined": 246
+          },
+          "rows": 567,
+          "unique_target_texts": 567
+        },
+        "experience_injection": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 600,
+                "numerator": 335,
+                "rate": 0.5583333333333333
+              },
+              "eligible": {
+                "denominator": 600,
+                "numerator": 335,
+                "rate": 0.5583333333333333
+              },
+              "query_returned": {
+                "denominator": 600,
+                "numerator": 335,
+                "rate": 0.5583333333333333
+              },
+              "withheld": {
+                "denominator": 600,
+                "numerator": 265,
+                "rate": 0.44166666666666665
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 600,
+                "numerator": 392,
+                "rate": 0.6533333333333333
+              },
+              "eligible": {
+                "denominator": 600,
+                "numerator": 392,
+                "rate": 0.6533333333333333
+              },
+              "query_returned": {
+                "denominator": 600,
+                "numerator": 392,
+                "rate": 0.6533333333333333
+              },
+              "withheld": {
+                "denominator": 600,
+                "numerator": 208,
+                "rate": 0.3466666666666667
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 600,
+                "numerator": 600,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 600,
+                "numerator": 600,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 600,
+                "numerator": 600,
+                "rate": 1.0
+              },
+              "withheld": {
+                "denominator": 600,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 600,
+          "raw_lexical_candidates": 600,
+          "recallguard_write_states": {
+            "active": 335,
+            "credential_rejected": 13,
+            "quarantined": 252
+          },
+          "rows": 600,
+          "unique_target_texts": 600
+        },
+        "explicit_keyword": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 16,
+                "numerator": 8,
+                "rate": 0.5
+              },
+              "eligible": {
+                "denominator": 16,
+                "numerator": 8,
+                "rate": 0.5
+              },
+              "query_returned": {
+                "denominator": 16,
+                "numerator": 8,
+                "rate": 0.5
+              },
+              "withheld": {
+                "denominator": 16,
+                "numerator": 8,
+                "rate": 0.5
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 16,
+                "numerator": 6,
+                "rate": 0.375
+              },
+              "eligible": {
+                "denominator": 16,
+                "numerator": 6,
+                "rate": 0.375
+              },
+              "query_returned": {
+                "denominator": 16,
+                "numerator": 6,
+                "rate": 0.375
+              },
+              "withheld": {
+                "denominator": 16,
+                "numerator": 10,
+                "rate": 0.625
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 16,
+                "numerator": 16,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 16,
+                "numerator": 16,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 16,
+                "numerator": 16,
+                "rate": 1.0
+              },
+              "withheld": {
+                "denominator": 16,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 16,
+          "raw_lexical_candidates": 16,
+          "recallguard_write_states": {
+            "active": 8,
+            "credential_rejected": 1,
+            "quarantined": 7
+          },
+          "rows": 16,
+          "unique_target_texts": 16
+        },
+        "explicit_keyword_injection": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 583,
+                "numerator": 259,
+                "rate": 0.444253859348199
+              },
+              "eligible": {
+                "denominator": 824,
+                "numerator": 397,
+                "rate": 0.4817961165048544
+              },
+              "query_returned": {
+                "denominator": 583,
+                "numerator": 259,
+                "rate": 0.444253859348199
+              },
+              "withheld": {
+                "denominator": 824,
+                "numerator": 427,
+                "rate": 0.5182038834951457
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 583,
+                "numerator": 341,
+                "rate": 0.5849056603773585
+              },
+              "eligible": {
+                "denominator": 824,
+                "numerator": 515,
+                "rate": 0.625
+              },
+              "query_returned": {
+                "denominator": 583,
+                "numerator": 341,
+                "rate": 0.5849056603773585
+              },
+              "withheld": {
+                "denominator": 824,
+                "numerator": 309,
+                "rate": 0.375
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 583,
+                "numerator": 583,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 824,
+                "numerator": 824,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 583,
+                "numerator": 583,
+                "rate": 1.0
+              },
+              "withheld": {
+                "denominator": 824,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 583,
+          "raw_lexical_candidates": 583,
+          "recallguard_write_states": {
+            "active": 397,
+            "credential_rejected": 20,
+            "quarantined": 407
+          },
+          "rows": 824,
+          "unique_target_texts": 824
+        },
+        "fact_injection": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 601,
+                "numerator": 445,
+                "rate": 0.740432612312812
+              },
+              "eligible": {
+                "denominator": 601,
+                "numerator": 445,
+                "rate": 0.740432612312812
+              },
+              "query_returned": {
+                "denominator": 601,
+                "numerator": 445,
+                "rate": 0.740432612312812
+              },
+              "withheld": {
+                "denominator": 601,
+                "numerator": 156,
+                "rate": 0.259567387687188
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 601,
+                "numerator": 224,
+                "rate": 0.37271214642262895
+              },
+              "eligible": {
+                "denominator": 601,
+                "numerator": 224,
+                "rate": 0.37271214642262895
+              },
+              "query_returned": {
+                "denominator": 601,
+                "numerator": 224,
+                "rate": 0.37271214642262895
+              },
+              "withheld": {
+                "denominator": 601,
+                "numerator": 377,
+                "rate": 0.627287853577371
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 601,
+                "numerator": 601,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 601,
+                "numerator": 601,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 601,
+                "numerator": 601,
+                "rate": 1.0
+              },
+              "withheld": {
+                "denominator": 601,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 601,
+          "raw_lexical_candidates": 601,
+          "recallguard_write_states": {
+            "active": 445,
+            "credential_rejected": 4,
+            "quarantined": 152
+          },
+          "rows": 601,
+          "unique_target_texts": 601
+        },
+        "repetition": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 3,
+                "numerator": 1,
+                "rate": 0.3333333333333333
+              },
+              "eligible": {
+                "denominator": 3,
+                "numerator": 1,
+                "rate": 0.3333333333333333
+              },
+              "query_returned": {
+                "denominator": 3,
+                "numerator": 1,
+                "rate": 0.3333333333333333
+              },
+              "withheld": {
+                "denominator": 3,
+                "numerator": 2,
+                "rate": 0.6666666666666666
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 3,
+                "numerator": 1,
+                "rate": 0.3333333333333333
+              },
+              "eligible": {
+                "denominator": 3,
+                "numerator": 1,
+                "rate": 0.3333333333333333
+              },
+              "query_returned": {
+                "denominator": 3,
+                "numerator": 1,
+                "rate": 0.3333333333333333
+              },
+              "withheld": {
+                "denominator": 3,
+                "numerator": 2,
+                "rate": 0.6666666666666666
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 3,
+                "numerator": 3,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 3,
+                "numerator": 3,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 3,
+                "numerator": 3,
+                "rate": 1.0
+              },
+              "withheld": {
+                "denominator": 3,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 3,
+          "raw_lexical_candidates": 3,
+          "recallguard_write_states": {
+            "active": 1,
+            "credential_rejected": 1,
+            "quarantined": 1
+          },
+          "rows": 3,
+          "unique_target_texts": 3
+        },
+        "repetition_based_injection": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 57,
+                "numerator": 24,
+                "rate": 0.42105263157894735
+              },
+              "eligible": {
+                "denominator": 57,
+                "numerator": 24,
+                "rate": 0.42105263157894735
+              },
+              "query_returned": {
+                "denominator": 57,
+                "numerator": 24,
+                "rate": 0.42105263157894735
+              },
+              "withheld": {
+                "denominator": 57,
+                "numerator": 33,
+                "rate": 0.5789473684210527
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 57,
+                "numerator": 22,
+                "rate": 0.38596491228070173
+              },
+              "eligible": {
+                "denominator": 57,
+                "numerator": 22,
+                "rate": 0.38596491228070173
+              },
+              "query_returned": {
+                "denominator": 57,
+                "numerator": 22,
+                "rate": 0.38596491228070173
+              },
+              "withheld": {
+                "denominator": 57,
+                "numerator": 35,
+                "rate": 0.6140350877192983
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 57,
+                "numerator": 57,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 57,
+                "numerator": 57,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 57,
+                "numerator": 57,
+                "rate": 1.0
+              },
+              "withheld": {
+                "denominator": 57,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 57,
+          "raw_lexical_candidates": 57,
+          "recallguard_write_states": {
+            "active": 24,
+            "credential_rejected": 9,
+            "quarantined": 24
+          },
+          "rows": 57,
+          "unique_target_texts": 57
+        },
+        "repetition_injection": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 540,
+                "numerator": 231,
+                "rate": 0.42777777777777776
+              },
+              "eligible": {
+                "denominator": 540,
+                "numerator": 231,
+                "rate": 0.42777777777777776
+              },
+              "query_returned": {
+                "denominator": 540,
+                "numerator": 231,
+                "rate": 0.42777777777777776
+              },
+              "withheld": {
+                "denominator": 540,
+                "numerator": 309,
+                "rate": 0.5722222222222222
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 540,
+                "numerator": 284,
+                "rate": 0.5259259259259259
+              },
+              "eligible": {
+                "denominator": 540,
+                "numerator": 284,
+                "rate": 0.5259259259259259
+              },
+              "query_returned": {
+                "denominator": 540,
+                "numerator": 284,
+                "rate": 0.5259259259259259
+              },
+              "withheld": {
+                "denominator": 540,
+                "numerator": 256,
+                "rate": 0.4740740740740741
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 540,
+                "numerator": 540,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 540,
+                "numerator": 540,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 540,
+                "numerator": 540,
+                "rate": 1.0
+              },
+              "withheld": {
+                "denominator": 540,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 540,
+          "raw_lexical_candidates": 540,
+          "recallguard_write_states": {
+            "active": 231,
+            "quarantined": 309
+          },
+          "rows": 540,
+          "unique_target_texts": 540
+        }
+      },
+      "domain": {
+        "calendar_and_scheduling": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 450,
+                "numerator": 295,
+                "rate": 0.6555555555555556
+              },
+              "eligible": {
+                "denominator": 450,
+                "numerator": 295,
+                "rate": 0.6555555555555556
+              },
+              "query_returned": {
+                "denominator": 450,
+                "numerator": 295,
+                "rate": 0.6555555555555556
+              },
+              "withheld": {
+                "denominator": 450,
+                "numerator": 155,
+                "rate": 0.34444444444444444
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 450,
+                "numerator": 293,
+                "rate": 0.6511111111111111
+              },
+              "eligible": {
+                "denominator": 450,
+                "numerator": 293,
+                "rate": 0.6511111111111111
+              },
+              "query_returned": {
+                "denominator": 450,
+                "numerator": 293,
+                "rate": 0.6511111111111111
+              },
+              "withheld": {
+                "denominator": 450,
+                "numerator": 157,
+                "rate": 0.3488888888888889
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 450,
+                "numerator": 450,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 450,
+                "numerator": 450,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 450,
+                "numerator": 450,
+                "rate": 1.0
+              },
+              "withheld": {
+                "denominator": 450,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 450,
+          "raw_lexical_candidates": 450,
+          "recallguard_write_states": {
+            "active": 295,
+            "credential_rejected": 3,
+            "quarantined": 152
+          },
+          "rows": 450,
+          "unique_target_texts": 450
+        },
+        "email_analysis_and_reply": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "eligible": {
+                "denominator": 53,
+                "numerator": 31,
+                "rate": 0.5849056603773585
+              },
+              "query_returned": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "withheld": {
+                "denominator": 53,
+                "numerator": 22,
+                "rate": 0.41509433962264153
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "eligible": {
+                "denominator": 53,
+                "numerator": 32,
+                "rate": 0.6037735849056604
+              },
+              "query_returned": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "withheld": {
+                "denominator": 53,
+                "numerator": 21,
+                "rate": 0.39622641509433965
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "eligible": {
+                "denominator": 53,
+                "numerator": 53,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "withheld": {
+                "denominator": 53,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 0,
+          "raw_lexical_candidates": 0,
+          "recallguard_write_states": {
+            "active": 31,
+            "credential_rejected": 4,
+            "quarantined": 18
+          },
+          "rows": 53,
+          "unique_target_texts": 53
+        },
+        "file_and_doc": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 551,
+                "numerator": 322,
+                "rate": 0.5843920145190563
+              },
+              "eligible": {
+                "denominator": 551,
+                "numerator": 322,
+                "rate": 0.5843920145190563
+              },
+              "query_returned": {
+                "denominator": 551,
+                "numerator": 322,
+                "rate": 0.5843920145190563
+              },
+              "withheld": {
+                "denominator": 551,
+                "numerator": 229,
+                "rate": 0.41560798548094374
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 551,
+                "numerator": 305,
+                "rate": 0.5535390199637024
+              },
+              "eligible": {
+                "denominator": 551,
+                "numerator": 305,
+                "rate": 0.5535390199637024
+              },
+              "query_returned": {
+                "denominator": 551,
+                "numerator": 305,
+                "rate": 0.5535390199637024
+              },
+              "withheld": {
+                "denominator": 551,
+                "numerator": 246,
+                "rate": 0.44646098003629764
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 551,
+                "numerator": 551,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 551,
+                "numerator": 551,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 551,
+                "numerator": 551,
+                "rate": 1.0
+              },
+              "withheld": {
+                "denominator": 551,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 551,
+          "raw_lexical_candidates": 551,
+          "recallguard_write_states": {
+            "active": 322,
+            "credential_rejected": 17,
+            "quarantined": 212
+          },
+          "rows": 551,
+          "unique_target_texts": 551
+        },
+        "file_and_document_handling": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "eligible": {
+                "denominator": 62,
+                "numerator": 35,
+                "rate": 0.5645161290322581
+              },
+              "query_returned": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "withheld": {
+                "denominator": 62,
+                "numerator": 27,
+                "rate": 0.43548387096774194
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "eligible": {
+                "denominator": 62,
+                "numerator": 49,
+                "rate": 0.7903225806451613
+              },
+              "query_returned": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "withheld": {
+                "denominator": 62,
+                "numerator": 13,
+                "rate": 0.20967741935483872
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "eligible": {
+                "denominator": 62,
+                "numerator": 62,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "withheld": {
+                "denominator": 62,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 0,
+          "raw_lexical_candidates": 0,
+          "recallguard_write_states": {
+            "active": 35,
+            "credential_rejected": 2,
+            "quarantined": 25
+          },
+          "rows": 62,
+          "unique_target_texts": 62
+        },
+        "script_execution": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 544,
+                "numerator": 216,
+                "rate": 0.39705882352941174
+              },
+              "eligible": {
+                "denominator": 597,
+                "numerator": 245,
+                "rate": 0.4103852596314908
+              },
+              "query_returned": {
+                "denominator": 549,
+                "numerator": 216,
+                "rate": 0.39344262295081966
+              },
+              "withheld": {
+                "denominator": 597,
+                "numerator": 352,
+                "rate": 0.5896147403685092
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 544,
+                "numerator": 298,
+                "rate": 0.5477941176470589
+              },
+              "eligible": {
+                "denominator": 597,
+                "numerator": 338,
+                "rate": 0.5661641541038526
+              },
+              "query_returned": {
+                "denominator": 549,
+                "numerator": 298,
+                "rate": 0.5428051001821493
+              },
+              "withheld": {
+                "denominator": 597,
+                "numerator": 259,
+                "rate": 0.4338358458961474
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 544,
+                "numerator": 544,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 597,
+                "numerator": 597,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 549,
+                "numerator": 544,
+                "rate": 0.9908925318761385
+              },
+              "withheld": {
+                "denominator": 597,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 549,
+          "raw_lexical_candidates": 544,
+          "recallguard_write_states": {
+            "active": 245,
+            "credential_rejected": 27,
+            "quarantined": 325
+          },
+          "rows": 597,
+          "unique_target_texts": 597
+        },
+        "slack": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 450,
+                "numerator": 222,
+                "rate": 0.49333333333333335
+              },
+              "eligible": {
+                "denominator": 450,
+                "numerator": 222,
+                "rate": 0.49333333333333335
+              },
+              "query_returned": {
+                "denominator": 450,
+                "numerator": 222,
+                "rate": 0.49333333333333335
+              },
+              "withheld": {
+                "denominator": 450,
+                "numerator": 228,
+                "rate": 0.5066666666666667
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 450,
+                "numerator": 265,
+                "rate": 0.5888888888888889
+              },
+              "eligible": {
+                "denominator": 450,
+                "numerator": 265,
+                "rate": 0.5888888888888889
+              },
+              "query_returned": {
+                "denominator": 450,
+                "numerator": 265,
+                "rate": 0.5888888888888889
+              },
+              "withheld": {
+                "denominator": 450,
+                "numerator": 185,
+                "rate": 0.4111111111111111
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 450,
+                "numerator": 450,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 450,
+                "numerator": 450,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 450,
+                "numerator": 450,
+                "rate": 1.0
+              },
+              "withheld": {
+                "denominator": 450,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 450,
+          "raw_lexical_candidates": 450,
+          "recallguard_write_states": {
+            "active": 222,
+            "quarantined": 228
+          },
+          "rows": 450,
+          "unique_target_texts": 450
+        },
+        "travel_assistance": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "eligible": {
+                "denominator": 34,
+                "numerator": 19,
+                "rate": 0.5588235294117647
+              },
+              "query_returned": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "withheld": {
+                "denominator": 34,
+                "numerator": 15,
+                "rate": 0.4411764705882353
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "eligible": {
+                "denominator": 34,
+                "numerator": 23,
+                "rate": 0.6764705882352942
+              },
+              "query_returned": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "withheld": {
+                "denominator": 34,
+                "numerator": 11,
+                "rate": 0.3235294117647059
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "eligible": {
+                "denominator": 34,
+                "numerator": 34,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "withheld": {
+                "denominator": 34,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 0,
+          "raw_lexical_candidates": 0,
+          "recallguard_write_states": {
+            "active": 19,
+            "quarantined": 15
+          },
+          "rows": 34,
+          "unique_target_texts": 34
+        },
+        "web_browsing": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 450,
+                "numerator": 268,
+                "rate": 0.5955555555555555
+              },
+              "eligible": {
+                "denominator": 450,
+                "numerator": 268,
+                "rate": 0.5955555555555555
+              },
+              "query_returned": {
+                "denominator": 450,
+                "numerator": 268,
+                "rate": 0.5955555555555555
+              },
+              "withheld": {
+                "denominator": 450,
+                "numerator": 182,
+                "rate": 0.40444444444444444
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 450,
+                "numerator": 224,
+                "rate": 0.49777777777777776
+              },
+              "eligible": {
+                "denominator": 450,
+                "numerator": 224,
+                "rate": 0.49777777777777776
+              },
+              "query_returned": {
+                "denominator": 450,
+                "numerator": 224,
+                "rate": 0.49777777777777776
+              },
+              "withheld": {
+                "denominator": 450,
+                "numerator": 226,
+                "rate": 0.5022222222222222
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 450,
+                "numerator": 450,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 450,
+                "numerator": 450,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 450,
+                "numerator": 450,
+                "rate": 1.0
+              },
+              "withheld": {
+                "denominator": 450,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 450,
+          "raw_lexical_candidates": 450,
+          "recallguard_write_states": {
+            "active": 268,
+            "credential_rejected": 4,
+            "quarantined": 178
+          },
+          "rows": 450,
+          "unique_target_texts": 450
+        },
+        "web_search_result_analysis": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "eligible": {
+                "denominator": 44,
+                "numerator": 27,
+                "rate": 0.6136363636363636
+              },
+              "query_returned": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "withheld": {
+                "denominator": 44,
+                "numerator": 17,
+                "rate": 0.38636363636363635
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "eligible": {
+                "denominator": 44,
+                "numerator": 34,
+                "rate": 0.7727272727272727
+              },
+              "query_returned": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "withheld": {
+                "denominator": 44,
+                "numerator": 10,
+                "rate": 0.22727272727272727
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "eligible": {
+                "denominator": 44,
+                "numerator": 44,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "withheld": {
+                "denominator": 44,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 0,
+          "raw_lexical_candidates": 0,
+          "recallguard_write_states": {
+            "active": 27,
+            "credential_rejected": 1,
+            "quarantined": 16
+          },
+          "rows": 44,
+          "unique_target_texts": 44
+        },
+        "workspace_email": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 549,
+                "numerator": 308,
+                "rate": 0.5610200364298725
+              },
+              "eligible": {
+                "denominator": 550,
+                "numerator": 309,
+                "rate": 0.5618181818181818
+              },
+              "query_returned": {
+                "denominator": 549,
+                "numerator": 308,
+                "rate": 0.5610200364298725
+              },
+              "withheld": {
+                "denominator": 550,
+                "numerator": 241,
+                "rate": 0.4381818181818182
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 549,
+                "numerator": 368,
+                "rate": 0.6703096539162113
+              },
+              "eligible": {
+                "denominator": 550,
+                "numerator": 369,
+                "rate": 0.6709090909090909
+              },
+              "query_returned": {
+                "denominator": 549,
+                "numerator": 368,
+                "rate": 0.6703096539162113
+              },
+              "withheld": {
+                "denominator": 550,
+                "numerator": 181,
+                "rate": 0.3290909090909091
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 549,
+                "numerator": 549,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 550,
+                "numerator": 550,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 549,
+                "numerator": 549,
+                "rate": 1.0
+              },
+              "withheld": {
+                "denominator": 550,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 549,
+          "raw_lexical_candidates": 549,
+          "recallguard_write_states": {
+            "active": 309,
+            "credential_rejected": 7,
+            "quarantined": 234
+          },
+          "rows": 550,
+          "unique_target_texts": 550
+        }
+      },
+      "overall": {
+        "methods": {
+          "recallguard": {
+            "candidate_retained": {
+              "denominator": 2994,
+              "numerator": 1631,
+              "rate": 0.5447561790247161
+            },
+            "eligible": {
+              "denominator": 3241,
+              "numerator": 1773,
+              "rate": 0.5470533785868559
+            },
+            "query_returned": {
+              "denominator": 2999,
+              "numerator": 1631,
+              "rate": 0.5438479493164388
+            },
+            "withheld": {
+              "denominator": 3241,
+              "numerator": 1468,
+              "rate": 0.45294662141314407
+            }
+          },
+          "text_filter": {
+            "candidate_retained": {
+              "denominator": 2994,
+              "numerator": 1753,
+              "rate": 0.5855043420173681
+            },
+            "eligible": {
+              "denominator": 3241,
+              "numerator": 1932,
+              "rate": 0.5961123110151187
+            },
+            "query_returned": {
+              "denominator": 2999,
+              "numerator": 1753,
+              "rate": 0.5845281760586862
+            },
+            "withheld": {
+              "denominator": 3241,
+              "numerator": 1309,
+              "rate": 0.4038876889848812
+            }
+          },
+          "unfiltered": {
+            "candidate_retained": {
+              "denominator": 2994,
+              "numerator": 2994,
+              "rate": 1.0
+            },
+            "eligible": {
+              "denominator": 3241,
+              "numerator": 3241,
+              "rate": 1.0
+            },
+            "query_returned": {
+              "denominator": 2999,
+              "numerator": 2994,
+              "rate": 0.9983327775925308
+            },
+            "withheld": {
+              "denominator": 3241,
+              "numerator": 0,
+              "rate": 0.0
+            }
+          }
+        },
+        "query_available": 2999,
+        "raw_lexical_candidates": 2994,
+        "recallguard_write_states": {
+          "active": 1773,
+          "credential_rejected": 65,
+          "quarantined": 1403
+        },
+        "rows": 3241,
+        "unique_target_texts": 3241
+      },
+      "target_field": {
+        "context": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 2994,
+                "numerator": 1631,
+                "rate": 0.5447561790247161
+              },
+              "eligible": {
+                "denominator": 3001,
+                "numerator": 1635,
+                "rate": 0.5448183938687104
+              },
+              "query_returned": {
+                "denominator": 2999,
+                "numerator": 1631,
+                "rate": 0.5438479493164388
+              },
+              "withheld": {
+                "denominator": 3001,
+                "numerator": 1366,
+                "rate": 0.45518160613128955
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 2994,
+                "numerator": 1753,
+                "rate": 0.5855043420173681
+              },
+              "eligible": {
+                "denominator": 3001,
+                "numerator": 1758,
+                "rate": 0.5858047317560813
+              },
+              "query_returned": {
+                "denominator": 2999,
+                "numerator": 1753,
+                "rate": 0.5845281760586862
+              },
+              "withheld": {
+                "denominator": 3001,
+                "numerator": 1243,
+                "rate": 0.41419526824391867
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 2994,
+                "numerator": 2994,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 3001,
+                "numerator": 3001,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 2999,
+                "numerator": 2994,
+                "rate": 0.9983327775925308
+              },
+              "withheld": {
+                "denominator": 3001,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 2999,
+          "raw_lexical_candidates": 2994,
+          "recallguard_write_states": {
+            "active": 1635,
+            "credential_rejected": 58,
+            "quarantined": 1308
+          },
+          "rows": 3001,
+          "unique_target_texts": 3001
+        },
+        "skill_md": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "eligible": {
+                "denominator": 240,
+                "numerator": 138,
+                "rate": 0.575
+              },
+              "query_returned": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "withheld": {
+                "denominator": 240,
+                "numerator": 102,
+                "rate": 0.425
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "eligible": {
+                "denominator": 240,
+                "numerator": 174,
+                "rate": 0.725
+              },
+              "query_returned": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "withheld": {
+                "denominator": 240,
+                "numerator": 66,
+                "rate": 0.275
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "eligible": {
+                "denominator": 240,
+                "numerator": 240,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 0,
+                "numerator": 0,
+                "rate": null
+              },
+              "withheld": {
+                "denominator": 240,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 0,
+          "raw_lexical_candidates": 0,
+          "recallguard_write_states": {
+            "active": 138,
+            "credential_rejected": 7,
+            "quarantined": 95
+          },
+          "rows": 240,
+          "unique_target_texts": 240
+        }
+      }
+    },
+    "benign": {
+      "attack_signal": {
+        "moderate": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 976,
+                "numerator": 811,
+                "rate": 0.8309426229508197
+              },
+              "eligible": {
+                "denominator": 989,
+                "numerator": 822,
+                "rate": 0.8311425682507584
+              },
+              "query_returned": {
+                "denominator": 989,
+                "numerator": 811,
+                "rate": 0.8200202224469161
+              },
+              "withheld": {
+                "denominator": 989,
+                "numerator": 167,
+                "rate": 0.16885743174924167
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 976,
+                "numerator": 902,
+                "rate": 0.9241803278688525
+              },
+              "eligible": {
+                "denominator": 989,
+                "numerator": 914,
+                "rate": 0.9241658240647118
+              },
+              "query_returned": {
+                "denominator": 989,
+                "numerator": 902,
+                "rate": 0.9120323559150657
+              },
+              "withheld": {
+                "denominator": 989,
+                "numerator": 75,
+                "rate": 0.07583417593528817
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 976,
+                "numerator": 976,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 989,
+                "numerator": 989,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 989,
+                "numerator": 976,
+                "rate": 0.9868554095045501
+              },
+              "withheld": {
+                "denominator": 989,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 989,
+          "raw_lexical_candidates": 976,
+          "recallguard_write_states": {
+            "active": 822,
+            "credential_rejected": 5,
+            "quarantined": 162
+          },
+          "rows": 989,
+          "unique_target_texts": 899
+        },
+        "strong": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 987,
+                "numerator": 750,
+                "rate": 0.7598784194528876
+              },
+              "eligible": {
+                "denominator": 990,
+                "numerator": 752,
+                "rate": 0.7595959595959596
+              },
+              "query_returned": {
+                "denominator": 990,
+                "numerator": 750,
+                "rate": 0.7575757575757576
+              },
+              "withheld": {
+                "denominator": 990,
+                "numerator": 238,
+                "rate": 0.2404040404040404
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 987,
+                "numerator": 900,
+                "rate": 0.9118541033434651
+              },
+              "eligible": {
+                "denominator": 990,
+                "numerator": 903,
+                "rate": 0.9121212121212121
+              },
+              "query_returned": {
+                "denominator": 990,
+                "numerator": 900,
+                "rate": 0.9090909090909091
+              },
+              "withheld": {
+                "denominator": 990,
+                "numerator": 87,
+                "rate": 0.08787878787878788
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 987,
+                "numerator": 987,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 990,
+                "numerator": 990,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 990,
+                "numerator": 987,
+                "rate": 0.996969696969697
+              },
+              "withheld": {
+                "denominator": 990,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 990,
+          "raw_lexical_candidates": 987,
+          "recallguard_write_states": {
+            "active": 752,
+            "credential_rejected": 1,
+            "quarantined": 237
+          },
+          "rows": 990,
+          "unique_target_texts": 900
+        },
+        "weak": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 1000,
+                "numerator": 917,
+                "rate": 0.917
+              },
+              "eligible": {
+                "denominator": 1020,
+                "numerator": 937,
+                "rate": 0.9186274509803921
+              },
+              "query_returned": {
+                "denominator": 1018,
+                "numerator": 917,
+                "rate": 0.9007858546168959
+              },
+              "withheld": {
+                "denominator": 1020,
+                "numerator": 83,
+                "rate": 0.08137254901960785
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 1000,
+                "numerator": 945,
+                "rate": 0.945
+              },
+              "eligible": {
+                "denominator": 1020,
+                "numerator": 963,
+                "rate": 0.9441176470588235
+              },
+              "query_returned": {
+                "denominator": 1018,
+                "numerator": 945,
+                "rate": 0.9282907662082515
+              },
+              "withheld": {
+                "denominator": 1020,
+                "numerator": 57,
+                "rate": 0.05588235294117647
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 1000,
+                "numerator": 1000,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 1020,
+                "numerator": 1020,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 1018,
+                "numerator": 1000,
+                "rate": 0.9823182711198428
+              },
+              "withheld": {
+                "denominator": 1020,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 1018,
+          "raw_lexical_candidates": 1000,
+          "recallguard_write_states": {
+            "active": 937,
+            "credential_rejected": 6,
+            "quarantined": 77
+          },
+          "rows": 1020,
+          "unique_target_texts": 900
+        }
+      },
+      "attack_type": {
+        "benign": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 2963,
+                "numerator": 2478,
+                "rate": 0.8363145460681741
+              },
+              "eligible": {
+                "denominator": 2999,
+                "numerator": 2511,
+                "rate": 0.8372790930310103
+              },
+              "query_returned": {
+                "denominator": 2997,
+                "numerator": 2478,
+                "rate": 0.8268268268268268
+              },
+              "withheld": {
+                "denominator": 2999,
+                "numerator": 488,
+                "rate": 0.16272090696898966
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 2963,
+                "numerator": 2747,
+                "rate": 0.9271009112386095
+              },
+              "eligible": {
+                "denominator": 2999,
+                "numerator": 2780,
+                "rate": 0.9269756585528509
+              },
+              "query_returned": {
+                "denominator": 2997,
+                "numerator": 2747,
+                "rate": 0.9165832499165832
+              },
+              "withheld": {
+                "denominator": 2999,
+                "numerator": 219,
+                "rate": 0.07302434144714905
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 2963,
+                "numerator": 2963,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 2999,
+                "numerator": 2999,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 2997,
+                "numerator": 2963,
+                "rate": 0.9886553219886554
+              },
+              "withheld": {
+                "denominator": 2999,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 2997,
+          "raw_lexical_candidates": 2963,
+          "recallguard_write_states": {
+            "active": 2511,
+            "credential_rejected": 12,
+            "quarantined": 476
+          },
+          "rows": 2999,
+          "unique_target_texts": 2699
+        }
+      },
+      "domain": {
+        "calendar_and_scheduling": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 469,
+                "numerator": 427,
+                "rate": 0.9104477611940298
+              },
+              "eligible": {
+                "denominator": 480,
+                "numerator": 437,
+                "rate": 0.9104166666666667
+              },
+              "query_returned": {
+                "denominator": 480,
+                "numerator": 427,
+                "rate": 0.8895833333333333
+              },
+              "withheld": {
+                "denominator": 480,
+                "numerator": 43,
+                "rate": 0.08958333333333333
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 469,
+                "numerator": 458,
+                "rate": 0.976545842217484
+              },
+              "eligible": {
+                "denominator": 480,
+                "numerator": 469,
+                "rate": 0.9770833333333333
+              },
+              "query_returned": {
+                "denominator": 480,
+                "numerator": 458,
+                "rate": 0.9541666666666667
+              },
+              "withheld": {
+                "denominator": 480,
+                "numerator": 11,
+                "rate": 0.022916666666666665
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 469,
+                "numerator": 469,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 480,
+                "numerator": 480,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 480,
+                "numerator": 469,
+                "rate": 0.9770833333333333
+              },
+              "withheld": {
+                "denominator": 480,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 480,
+          "raw_lexical_candidates": 469,
+          "recallguard_write_states": {
+            "active": 437,
+            "credential_rejected": 4,
+            "quarantined": 39
+          },
+          "rows": 480,
+          "unique_target_texts": 450
+        },
+        "file_and_doc": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 527,
+                "numerator": 450,
+                "rate": 0.8538899430740038
+              },
+              "eligible": {
+                "denominator": 540,
+                "numerator": 461,
+                "rate": 0.8537037037037037
+              },
+              "query_returned": {
+                "denominator": 538,
+                "numerator": 450,
+                "rate": 0.8364312267657993
+              },
+              "withheld": {
+                "denominator": 540,
+                "numerator": 79,
+                "rate": 0.14629629629629629
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 527,
+                "numerator": 484,
+                "rate": 0.9184060721062619
+              },
+              "eligible": {
+                "denominator": 540,
+                "numerator": 496,
+                "rate": 0.9185185185185185
+              },
+              "query_returned": {
+                "denominator": 538,
+                "numerator": 484,
+                "rate": 0.8996282527881041
+              },
+              "withheld": {
+                "denominator": 540,
+                "numerator": 44,
+                "rate": 0.08148148148148149
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 527,
+                "numerator": 527,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 540,
+                "numerator": 540,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 538,
+                "numerator": 527,
+                "rate": 0.9795539033457249
+              },
+              "withheld": {
+                "denominator": 540,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 538,
+          "raw_lexical_candidates": 527,
+          "recallguard_write_states": {
+            "active": 461,
+            "quarantined": 79
+          },
+          "rows": 540,
+          "unique_target_texts": 450
+        },
+        "script_execution": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 538,
+                "numerator": 371,
+                "rate": 0.6895910780669146
+              },
+              "eligible": {
+                "denominator": 540,
+                "numerator": 373,
+                "rate": 0.6907407407407408
+              },
+              "query_returned": {
+                "denominator": 540,
+                "numerator": 371,
+                "rate": 0.687037037037037
+              },
+              "withheld": {
+                "denominator": 540,
+                "numerator": 167,
+                "rate": 0.30925925925925923
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 538,
+                "numerator": 491,
+                "rate": 0.912639405204461
+              },
+              "eligible": {
+                "denominator": 540,
+                "numerator": 493,
+                "rate": 0.912962962962963
+              },
+              "query_returned": {
+                "denominator": 540,
+                "numerator": 491,
+                "rate": 0.9092592592592592
+              },
+              "withheld": {
+                "denominator": 540,
+                "numerator": 47,
+                "rate": 0.08703703703703704
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 538,
+                "numerator": 538,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 540,
+                "numerator": 540,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 540,
+                "numerator": 538,
+                "rate": 0.9962962962962963
+              },
+              "withheld": {
+                "denominator": 540,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 540,
+          "raw_lexical_candidates": 538,
+          "recallguard_write_states": {
+            "active": 373,
+            "credential_rejected": 7,
+            "quarantined": 160
+          },
+          "rows": 540,
+          "unique_target_texts": 450
+        },
+        "slack": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 448,
+                "numerator": 376,
+                "rate": 0.8392857142857143
+              },
+              "eligible": {
+                "denominator": 450,
+                "numerator": 378,
+                "rate": 0.84
+              },
+              "query_returned": {
+                "denominator": 450,
+                "numerator": 376,
+                "rate": 0.8355555555555556
+              },
+              "withheld": {
+                "denominator": 450,
+                "numerator": 72,
+                "rate": 0.16
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 448,
+                "numerator": 430,
+                "rate": 0.9598214285714286
+              },
+              "eligible": {
+                "denominator": 450,
+                "numerator": 431,
+                "rate": 0.9577777777777777
+              },
+              "query_returned": {
+                "denominator": 450,
+                "numerator": 430,
+                "rate": 0.9555555555555556
+              },
+              "withheld": {
+                "denominator": 450,
+                "numerator": 19,
+                "rate": 0.042222222222222223
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 448,
+                "numerator": 448,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 450,
+                "numerator": 450,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 450,
+                "numerator": 448,
+                "rate": 0.9955555555555555
+              },
+              "withheld": {
+                "denominator": 450,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 450,
+          "raw_lexical_candidates": 448,
+          "recallguard_write_states": {
+            "active": 378,
+            "credential_rejected": 1,
+            "quarantined": 71
+          },
+          "rows": 450,
+          "unique_target_texts": 450
+        },
+        "web_browsing": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 442,
+                "numerator": 372,
+                "rate": 0.8416289592760181
+              },
+              "eligible": {
+                "denominator": 449,
+                "numerator": 379,
+                "rate": 0.844097995545657
+              },
+              "query_returned": {
+                "denominator": 449,
+                "numerator": 372,
+                "rate": 0.8285077951002228
+              },
+              "withheld": {
+                "denominator": 449,
+                "numerator": 70,
+                "rate": 0.155902004454343
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 442,
+                "numerator": 371,
+                "rate": 0.8393665158371041
+              },
+              "eligible": {
+                "denominator": 449,
+                "numerator": 377,
+                "rate": 0.8396436525612472
+              },
+              "query_returned": {
+                "denominator": 449,
+                "numerator": 371,
+                "rate": 0.8262806236080178
+              },
+              "withheld": {
+                "denominator": 449,
+                "numerator": 72,
+                "rate": 0.1603563474387528
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 442,
+                "numerator": 442,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 449,
+                "numerator": 449,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 449,
+                "numerator": 442,
+                "rate": 0.9844097995545658
+              },
+              "withheld": {
+                "denominator": 449,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 449,
+          "raw_lexical_candidates": 442,
+          "recallguard_write_states": {
+            "active": 379,
+            "quarantined": 70
+          },
+          "rows": 449,
+          "unique_target_texts": 449
+        },
+        "workspace_email": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 539,
+                "numerator": 482,
+                "rate": 0.8942486085343229
+              },
+              "eligible": {
+                "denominator": 540,
+                "numerator": 483,
+                "rate": 0.8944444444444445
+              },
+              "query_returned": {
+                "denominator": 540,
+                "numerator": 482,
+                "rate": 0.8925925925925926
+              },
+              "withheld": {
+                "denominator": 540,
+                "numerator": 57,
+                "rate": 0.10555555555555556
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 539,
+                "numerator": 513,
+                "rate": 0.9517625231910947
+              },
+              "eligible": {
+                "denominator": 540,
+                "numerator": 514,
+                "rate": 0.9518518518518518
+              },
+              "query_returned": {
+                "denominator": 540,
+                "numerator": 513,
+                "rate": 0.95
+              },
+              "withheld": {
+                "denominator": 540,
+                "numerator": 26,
+                "rate": 0.04814814814814815
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 539,
+                "numerator": 539,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 540,
+                "numerator": 540,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 540,
+                "numerator": 539,
+                "rate": 0.9981481481481481
+              },
+              "withheld": {
+                "denominator": 540,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 540,
+          "raw_lexical_candidates": 539,
+          "recallguard_write_states": {
+            "active": 483,
+            "quarantined": 57
+          },
+          "rows": 540,
+          "unique_target_texts": 450
+        }
+      },
+      "legitimate_memory_write": {
+        "false": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 2714,
+                "numerator": 2293,
+                "rate": 0.8448784082535004
+              },
+              "eligible": {
+                "denominator": 2750,
+                "numerator": 2326,
+                "rate": 0.8458181818181818
+              },
+              "query_returned": {
+                "denominator": 2748,
+                "numerator": 2293,
+                "rate": 0.8344250363901019
+              },
+              "withheld": {
+                "denominator": 2750,
+                "numerator": 424,
+                "rate": 0.15418181818181817
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 2714,
+                "numerator": 2520,
+                "rate": 0.9285187914517318
+              },
+              "eligible": {
+                "denominator": 2750,
+                "numerator": 2553,
+                "rate": 0.9283636363636364
+              },
+              "query_returned": {
+                "denominator": 2748,
+                "numerator": 2520,
+                "rate": 0.9170305676855895
+              },
+              "withheld": {
+                "denominator": 2750,
+                "numerator": 197,
+                "rate": 0.07163636363636364
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 2714,
+                "numerator": 2714,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 2750,
+                "numerator": 2750,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 2748,
+                "numerator": 2714,
+                "rate": 0.987627365356623
+              },
+              "withheld": {
+                "denominator": 2750,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 2748,
+          "raw_lexical_candidates": 2714,
+          "recallguard_write_states": {
+            "active": 2326,
+            "credential_rejected": 12,
+            "quarantined": 412
+          },
+          "rows": 2750,
+          "unique_target_texts": 2467
+        },
+        "true": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 249,
+                "numerator": 185,
+                "rate": 0.7429718875502008
+              },
+              "eligible": {
+                "denominator": 249,
+                "numerator": 185,
+                "rate": 0.7429718875502008
+              },
+              "query_returned": {
+                "denominator": 249,
+                "numerator": 185,
+                "rate": 0.7429718875502008
+              },
+              "withheld": {
+                "denominator": 249,
+                "numerator": 64,
+                "rate": 0.2570281124497992
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 249,
+                "numerator": 227,
+                "rate": 0.9116465863453815
+              },
+              "eligible": {
+                "denominator": 249,
+                "numerator": 227,
+                "rate": 0.9116465863453815
+              },
+              "query_returned": {
+                "denominator": 249,
+                "numerator": 227,
+                "rate": 0.9116465863453815
+              },
+              "withheld": {
+                "denominator": 249,
+                "numerator": 22,
+                "rate": 0.08835341365461848
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 249,
+                "numerator": 249,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 249,
+                "numerator": 249,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 249,
+                "numerator": 249,
+                "rate": 1.0
+              },
+              "withheld": {
+                "denominator": 249,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 249,
+          "raw_lexical_candidates": 249,
+          "recallguard_write_states": {
+            "active": 185,
+            "quarantined": 64
+          },
+          "rows": 249,
+          "unique_target_texts": 232
+        }
+      },
+      "overall": {
+        "methods": {
+          "recallguard": {
+            "candidate_retained": {
+              "denominator": 2963,
+              "numerator": 2478,
+              "rate": 0.8363145460681741
+            },
+            "eligible": {
+              "denominator": 2999,
+              "numerator": 2511,
+              "rate": 0.8372790930310103
+            },
+            "query_returned": {
+              "denominator": 2997,
+              "numerator": 2478,
+              "rate": 0.8268268268268268
+            },
+            "withheld": {
+              "denominator": 2999,
+              "numerator": 488,
+              "rate": 0.16272090696898966
+            }
+          },
+          "text_filter": {
+            "candidate_retained": {
+              "denominator": 2963,
+              "numerator": 2747,
+              "rate": 0.9271009112386095
+            },
+            "eligible": {
+              "denominator": 2999,
+              "numerator": 2780,
+              "rate": 0.9269756585528509
+            },
+            "query_returned": {
+              "denominator": 2997,
+              "numerator": 2747,
+              "rate": 0.9165832499165832
+            },
+            "withheld": {
+              "denominator": 2999,
+              "numerator": 219,
+              "rate": 0.07302434144714905
+            }
+          },
+          "unfiltered": {
+            "candidate_retained": {
+              "denominator": 2963,
+              "numerator": 2963,
+              "rate": 1.0
+            },
+            "eligible": {
+              "denominator": 2999,
+              "numerator": 2999,
+              "rate": 1.0
+            },
+            "query_returned": {
+              "denominator": 2997,
+              "numerator": 2963,
+              "rate": 0.9886553219886554
+            },
+            "withheld": {
+              "denominator": 2999,
+              "numerator": 0,
+              "rate": 0.0
+            }
+          }
+        },
+        "query_available": 2997,
+        "raw_lexical_candidates": 2963,
+        "recallguard_write_states": {
+          "active": 2511,
+          "credential_rejected": 12,
+          "quarantined": 476
+        },
+        "rows": 2999,
+        "unique_target_texts": 2699
+      },
+      "target_field": {
+        "context": {
+          "methods": {
+            "recallguard": {
+              "candidate_retained": {
+                "denominator": 2963,
+                "numerator": 2478,
+                "rate": 0.8363145460681741
+              },
+              "eligible": {
+                "denominator": 2999,
+                "numerator": 2511,
+                "rate": 0.8372790930310103
+              },
+              "query_returned": {
+                "denominator": 2997,
+                "numerator": 2478,
+                "rate": 0.8268268268268268
+              },
+              "withheld": {
+                "denominator": 2999,
+                "numerator": 488,
+                "rate": 0.16272090696898966
+              }
+            },
+            "text_filter": {
+              "candidate_retained": {
+                "denominator": 2963,
+                "numerator": 2747,
+                "rate": 0.9271009112386095
+              },
+              "eligible": {
+                "denominator": 2999,
+                "numerator": 2780,
+                "rate": 0.9269756585528509
+              },
+              "query_returned": {
+                "denominator": 2997,
+                "numerator": 2747,
+                "rate": 0.9165832499165832
+              },
+              "withheld": {
+                "denominator": 2999,
+                "numerator": 219,
+                "rate": 0.07302434144714905
+              }
+            },
+            "unfiltered": {
+              "candidate_retained": {
+                "denominator": 2963,
+                "numerator": 2963,
+                "rate": 1.0
+              },
+              "eligible": {
+                "denominator": 2999,
+                "numerator": 2999,
+                "rate": 1.0
+              },
+              "query_returned": {
+                "denominator": 2997,
+                "numerator": 2963,
+                "rate": 0.9886553219886554
+              },
+              "withheld": {
+                "denominator": 2999,
+                "numerator": 0,
+                "rate": 0.0
+              }
+            }
+          },
+          "query_available": 2997,
+          "raw_lexical_candidates": 2963,
+          "recallguard_write_states": {
+            "active": 2511,
+            "credential_rejected": 12,
+            "quarantined": 476
+          },
+          "rows": 2999,
+          "unique_target_texts": 2699
+        }
+      }
+    }
+  },
+  "limitations": [
+    "This is an external-material admission audit, not MPBench ASR/RSR or an agent benchmark reproduction.",
+    "Forced ingestion skips the agent write decision, summarization and later behavior; no tool actions or hosted model are tested.",
+    "Whole target material eligibility does not establish whether an agent adopts its malicious span or answers correctly.",
+    "Benign withholding measures access to supplied context, not correctness of legitimate_memory_write decisions.",
+    "Raw corpus labels and duplicate rows are preserved; row-weighted results are not independent samples or verified ground truth.",
+    "Missing follow-up queries have no retrieval outcome and do not count as successfully blocked attacks.",
+    "Lexical misses are reported separately from admission withholding; no semantic-retrieval result is claimed."
+  ],
+  "protocol": "mpbench-external-material-audit-v1",
+  "provenance": {
+    "files": {
+      "LICENSE": {
+        "bytes": 11357,
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      },
+      "README.md": {
+        "bytes": 2321,
+        "sha256": "3e4563c3cf00e14da9d663fee2b94f6725f90fa09fe409311613fe719d5c8a3a"
+      },
+      "adversarial_data.jsonl.jsonl": {
+        "bytes": 7339100,
+        "sha256": "f2d23a5a2d483889eb2fdd9a2a082f0759603bc0a17664814a7caafbd318f90d"
+      },
+      "benign_data.jsonl.jsonl": {
+        "bytes": 6564735,
+        "sha256": "707ef7e311e147d9818a8a9e04293296fc6bf3390241e4cac23c8145765b62d5"
+      }
+    },
+    "license": "Apache-2.0",
+    "parsing": {
+      "adversarial": {
+        "id_prefix_mismatches": 0,
+        "multiple_object_lines": [
+          {
+            "line": 1080,
+            "objects": 2
+          }
+        ],
+        "string_boolean_labels": 0
+      },
+      "benign": {
+        "id_prefix_mismatches": 300,
+        "multiple_object_lines": [],
+        "string_boolean_labels": 7
+      }
+    },
+    "repository": "https://github.com/Digital-Trust-Lab/mp-bench",
+    "revision": "6886880a7c29625e0109e0ad91d0e095029f1577"
+  },
+  "software": {
+    "recallguard": "0.10.0",
+    "source_sha256": {
+      "conflicts.py": "0f7bdf1f69c4d244e088794ec1a1ad26ac5f15bbaa6d9c3417dcd82d0a05cc42",
+      "context_review.py": "053456bbd1cf38d2efe9b03f5e9cd40e21234e338fc4ca96f5787d640c65cc8f",
+      "engine.py": "d7049a4624e57e040147a274a6ca5316fb7aadf96dd65f5555cad254fd3c208f",
+      "evaluation/mpbench.py": "517ab99db3f50c6f2b9e89127057433dd3f746559c1b948a82fd2f0a66091a64",
+      "evaluation/runner.py": "4856025bc71b160a307c6ab6229f67ed4962f7ce45c5f1f0133f7a155505ca7d",
+      "models.py": "e953df9514e9b65e09f7268e43fa08009aa2ad6043fd82ae4332db8efc073540",
+      "screening.py": "a85e702165003392a44f721647e8983a9cff9a727122e3d17087200188f73f35",
+      "store.py": "bf27f3fe44c04734bb8545ba0b166b132fa1f3852e2a765af86105305df779db",
+      "verification.py": "c0dcc9ece556060e1972b88c3e7c5392894e63865b5299d8b7b015a0dc319c5c"
+    }
+  }
+}
