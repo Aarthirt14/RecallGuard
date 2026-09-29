@@ -80,3 +80,29 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run format:check
       - run: npm test
+  external-context-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e '.[dev]'
+      - name: Fetch pinned data only
+        run: |
+          git init evaluation-output/mpbench-input
+          git -C evaluation-output/mpbench-input remote add origin https://github.com/Digital-Trust-Lab/mp-bench.git
+          git -C evaluation-output/mpbench-input fetch --depth=1 origin 6886880a7c29625e0109e0ad91d0e095029f1577
+          git -C evaluation-output/mpbench-input config core.autocrlf false
+          git -C evaluation-output/mpbench-input checkout --detach FETCH_HEAD
+      - name: Audit all original external material
+        run: >-
+          python -m recallguard.evaluation.mpbench
+          --data-dir evaluation-output/mpbench-input
+          --output evaluation-output/mpbench/full.json
+          --summary evaluation-output/mpbench/summary.json
+          --markdown evaluation-output/mpbench/report.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: external-context-audit
+          path: evaluation-output/mpbench/
