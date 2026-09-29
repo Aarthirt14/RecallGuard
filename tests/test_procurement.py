@@ -435,3 +435,35 @@ def test_withdrawn_verification_blocks_approved_payment_even_after_new_evidence(
     approve(procurement, reviewer, fresh)
     assert procurement.execute(fresh, agent).status == "executed"
     assert len(guard.inspect(reviewer).receipts) == 1
+
+
+def test_conflict_replacement_never_revives_old_payment_or_permissions(
+    guard, agent, reviewer, procurement, prepared
+):
+    from conflict_support import resolution_request
+
+    observation, proposal_id = prepared
+    approve(procurement, reviewer, proposal_id)
+    selected = guard.inspect(reviewer).memories[observation.memory_ids[0]]
+    guard.remember(
+        MemoryInput(
+            content="ABC account is 887766",
+            source_id="email",
+            claim=Claim(entity="supplier:ABC", attribute="bank_account", value="887766"),
+        ),
+        agent,
+    )
+    assert procurement.execute(proposal_id, agent).status == "blocked"
+    resolution = guard.resolve_conflict(resolution_request(guard, reviewer, selected), reviewer)
+    assert procurement.execute(proposal_id, agent).status == "blocked"
+    assert plan(guard, agent).status == "blocked"
+    permit(guard, reviewer, resolution.replacement_memory_id)
+    assert procurement.execute(proposal_id, agent).status == "blocked"
+    new_run = plan(guard, agent)
+    assert new_run.proposal_id and new_run.proposal_id != proposal_id
+    assert procurement.execute(new_run.proposal_id, agent).status == "blocked"
+    approve(procurement, reviewer, new_run.proposal_id)
+    assert procurement.execute(new_run.proposal_id, agent).status == "executed"
+    state = guard.inspect(reviewer)
+    assert len(state.receipts) == 1
+    assert state.payments[proposal_id].terms.memory_id != resolution.replacement_memory_id

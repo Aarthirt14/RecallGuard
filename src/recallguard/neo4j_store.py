@@ -11,7 +11,15 @@ from typing import TypeVar
 from neo4j import GraphDatabase
 
 from recallguard.embeddings import EmbeddingRecord
-from recallguard.models import AuditEvent, ClaimVerification, ContextReview, Grant, Memory, Source
+from recallguard.models import (
+    AuditEvent,
+    ClaimVerification,
+    ConflictResolution,
+    ContextReview,
+    Grant,
+    Memory,
+    Source,
+)
 from recallguard.procurement_models import (
     AgentRun,
     Invoice,
@@ -32,6 +40,7 @@ MODELS.update(
     embeddings=EmbeddingRecord,
     context_reviews=ContextReview,
     claim_verifications=ClaimVerification,
+    conflict_resolutions=ConflictResolution,
 )
 
 

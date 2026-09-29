@@ -190,6 +190,26 @@ class ClaimVerification(ClaimVerificationInput):
     withdrawal_reason: str | None = None
 
 
+class ConflictResolutionInput(Model):
+    selected_memory_id: Identifier
+    evidence_source_id: Identifier
+    expected_fingerprint: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
+    evidence_reference: Annotated[str, Field(min_length=5, max_length=2000)]
+    method: Literal["official_record", "callback", "in_person"]
+    independently_checked: Literal[True]
+    reason: Annotated[str, Field(min_length=5, max_length=2000)]
+
+
+class ConflictResolution(ConflictResolutionInput):
+    id: str = Field(default_factory=new_id)
+    claim: Claim
+    conflicting_memory_ids: list[str]
+    retired_memory_ids: list[str]
+    replacement_memory_id: str
+    resolved_by: str
+    created_at: datetime = Field(default_factory=now)
+
+
 class RetrievalInput(Model):
     query: Annotated[str, Field(min_length=1, max_length=2000)]
     action: Action = Action.INFORM

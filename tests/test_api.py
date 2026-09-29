@@ -122,3 +122,66 @@ def test_context_screening_cannot_be_bypassed_through_api(client):
     assert retrieved.status_code == 200
     assert [m["id"] for m in retrieved.json()["allowed"]] == [good.json()["id"]]
     assert "OR9999" not in retrieved.text
+
+
+def test_conflict_resolution_requires_reviewer_confirmation_and_fresh_snapshot(client):
+    for sid in ("first", "second", "independent"):
+        client.post(
+            "/sources",
+            headers=REVIEWER,
+            json={"id": sid, "kind": "web", "locator": f"fixture:{sid}"},
+        ).raise_for_status()
+    memories = []
+    for sid, value in (("first", "1234"), ("second", "5678")):
+        response = client.post(
+            "/memories",
+            headers=AGENT,
+            json={
+                "content": f"Orion account {value}",
+                "source_id": sid,
+                "claim": {"entity": "Orion", "attribute": "account", "value": value},
+            },
+        )
+        response.raise_for_status()
+        memories.append(response.json())
+    selected = memories[0]["id"]
+    snapshot = client.get("/review", headers=REVIEWER).json()
+    option = snapshot["conflict_resolution_options"][selected]
+    assert set(option["retired_memory_ids"]) == {m["id"] for m in memories}
+    assert [s["id"] for s in option["evidence_sources"]] == ["independent"]
+    data = {
+        "selected_memory_id": selected,
+        "evidence_source_id": "independent",
+        "expected_fingerprint": option["evidence_sources"][0]["fingerprint"],
+        "evidence_reference": "document:001",
+        "method": "official_record",
+        "independently_checked": True,
+        "reason": "Independent check completed",
+    }
+    assert client.post("/conflict-resolutions", json=data).status_code == 401
+    assert client.post("/conflict-resolutions", json=data, headers=AGENT).status_code == 403
+    assert (
+        client.post(
+            "/conflict-resolutions", json={**data, "independently_checked": False}, headers=REVIEWER
+        ).status_code
+        == 422
+    )
+    assert (
+        client.post(
+            "/conflict-resolutions",
+            json={**data, "expected_fingerprint": "0" * 64},
+            headers=REVIEWER,
+        ).status_code
+        == 409
+    )
+    response = client.post("/conflict-resolutions", json=data, headers=REVIEWER)
+    assert response.status_code == 201
+    assert response.headers["cache-control"] == "no-store"
+    result = response.json()
+    assert client.post("/conflict-resolutions", json=data, headers=REVIEWER).status_code == 409
+    snapshot = client.get("/review", headers=REVIEWER).json()
+    assert snapshot["conflict_resolutions"] == [result]
+    assert (
+        snapshot["claim_verification_options"][result["replacement_memory_id"]]["current_id"]
+        is None
+    )

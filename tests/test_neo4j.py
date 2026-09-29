@@ -174,3 +174,52 @@ def test_informational_review_persists_and_withdraws_after_reconnect(reviewer, a
             ).consume()
             session.run("MATCH (n:RGWorkspace {id: $ns}) DELETE n", ns=namespace).consume()
         store.close()
+
+
+def test_conflict_resolution_persists_and_old_permissions_stay_blocked(reviewer, agent):
+    from conflict_support import resolution_request
+
+    namespace = f"test-{uuid4()}"
+    args = (os.environ["NEO4J_TEST_URI"], "neo4j", os.environ["NEO4J_TEST_PASSWORD"], namespace)
+    store = Neo4jStore(*args)
+    try:
+        guard = RecallGuard(store)
+        for sid in ("web", "independent"):
+            guard.register_source(SourceInput(id=sid, kind="web", locator=f"test:{sid}"), reviewer)
+        records = [
+            guard.remember(
+                MemoryInput(
+                    content=f"Orion account {value}",
+                    source_id="web",
+                    claim={"entity": "Orion", "attribute": "account", "value": value},
+                ),
+                agent,
+            )
+            for value in ("1234", "5678")
+        ]
+        resolution = guard.resolve_conflict(
+            resolution_request(guard, reviewer, records[0], "independent"), reviewer
+        )
+        before = guard.inspect(reviewer)
+        store.close()
+        store = Neo4jStore(*args)
+        guard = RecallGuard(store)
+        after = guard.inspect(reviewer)
+        assert after.conflict_resolutions == before.conflict_resolutions
+        assert after.memories == before.memories
+        assert after.events == before.events
+        assert [m.id for m in guard.retrieve(RetrievalInput(query="Orion"), agent).allowed] == [
+            resolution.replacement_memory_id
+        ]
+        assert not guard.retrieve(
+            RetrievalInput(query="Orion", action="payment", target="Orion"), agent
+        ).allowed
+        guard.revoke(resolution.replacement_memory_id, "Evidence withdrawn", reviewer)
+        assert not guard.retrieve(RetrievalInput(query="Orion"), agent).allowed
+    finally:
+        with store.driver.session() as session:
+            session.run(
+                "MATCH (n:RGObject {namespace: $ns}) DETACH DELETE n", ns=namespace
+            ).consume()
+            session.run("MATCH (n:RGWorkspace {id: $ns}) DELETE n", ns=namespace).consume()
+        store.close()

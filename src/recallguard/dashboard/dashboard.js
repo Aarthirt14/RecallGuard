@@ -738,6 +738,7 @@ function showMemory(id) {
   }
   sources.append(sourceList);
   content.append(sources);
+  showConflictResolution(m, content);
   if (m.claim) showClaimVerification(m, content);
   content.append(el("h3", "section-title", "Informational review"));
   const option = snapshot.context_review_options[id];
@@ -998,6 +999,127 @@ function grantMemory(m) {
         expires_at: expiry(data),
       });
       return "Scoped grant issued. Descendants do not inherit this approval.";
+    },
+  );
+}
+function showConflictResolution(m, content) {
+  const option = snapshot.conflict_resolution_options[m.id];
+  const history = snapshot.conflict_resolutions.filter(
+    (r) =>
+      r.retired_memory_ids.includes(m.id) || r.replacement_memory_id === m.id,
+  );
+  if (!option?.conflicting_memory_ids.length && !history.length) return;
+  content.append(el("h3", "section-title", "Conflict resolution"));
+  if (option?.conflicting_memory_ids.length) {
+    content.append(
+      note(
+        "Independently check this claim before selecting it. Resolution permanently retires all records for this claim key and their descendants, and creates a fresh assertion from the separate source. Old permissions stay blocked.",
+        true,
+      ),
+    );
+    const resolve = button("Resolve using this claim", () =>
+      resolveConflict(m, option),
+    );
+    resolve.disabled = !option.evidence_sources.length;
+    content.append(resolve);
+    if (!option.evidence_sources.length)
+      content.append(
+        note(
+          "No eligible separate source, or the replacement claim is restricted. Register independent evidence through the sources API first.",
+        ),
+      );
+  }
+  for (const r of history) {
+    const row = el("div", "list-row"),
+      body = el("div");
+    body.append(
+      el("strong", "", "Conflict retired with a replacement"),
+      el("p", "", `${r.resolved_by} · ${date(r.created_at)} · ${r.reason}`),
+      el(
+        "p",
+        "",
+        `${r.evidence_source_id} · ${human(r.method)} · ${r.evidence_reference}`,
+      ),
+      el(
+        "p",
+        "",
+        `${r.retired_memory_ids.length} records retired. This is a historical decision, not a current action permission.`,
+      ),
+    );
+    row.append(
+      body,
+      button(
+        "Inspect replacement",
+        () => showMemory(r.replacement_memory_id),
+        "quiet",
+      ),
+    );
+    content.append(row);
+  }
+}
+function resolveConflict(m, option) {
+  decisionDialog(
+    "Resolve conflicting claims",
+    "Complete the independent check outside this app. Retirement cannot be undone. The replacement needs a separate verification and grant before consequential use. In semantic workspaces, run embedding backfill to index it.",
+    "Retire conflicts and create replacement",
+    (grid) => {
+      const impact = note(
+        `Selected replacement: ${option.replacement_content}\n${option.conflicting_memory_ids.length} records share this claim key. ${option.retired_memory_ids.length} records will remain or become revoked, including descendants.`,
+        true,
+      );
+      impact.classList.add("full");
+      grid.append(impact);
+      const affected = el("details", "full event-details");
+      affected.append(el("summary", "", "Inspect every affected record"));
+      for (const id of option.retired_memory_ids) {
+        const record = memoryById(id);
+        affected.append(
+          el("p", "", `${id} · ${record.status} · ${record.content}`),
+        );
+      }
+      grid.append(affected);
+      const source = selectField(
+        "Separate evidence source",
+        "evidence-source",
+        option.evidence_sources.map((s) => [s.id, s.id]),
+      );
+      const method = selectField("Checking method", "method", [
+        ["official_record", "Official record"],
+        ["callback", "Independent callback"],
+        ["in_person", "In-person check"],
+      ]);
+      const reference = field(
+        "Document, page or callback log reference",
+        "evidence-reference",
+      );
+      reference.input.minLength = 5;
+      reference.input.maxLength = 2000;
+      const details = note("");
+      details.classList.add("full");
+      const updateSource = () => {
+        const registered = snapshot.sources.find(
+          (s) => s.id === source.input.value,
+        );
+        details.textContent = `${registered.id} · ${registered.kind}\n${registered.locator}`;
+      };
+      source.input.addEventListener("change", updateSource);
+      updateSource();
+      grid.append(source.wrap, method.wrap, reference.wrap, details);
+    },
+    async (data) => {
+      const source = option.evidence_sources.find(
+        (s) => s.id === data.get("evidence-source"),
+      );
+      await api("/conflict-resolutions", {
+        selected_memory_id: m.id,
+        evidence_source_id: source.id,
+        expected_fingerprint: source.fingerprint,
+        evidence_reference: data.get("evidence-reference").trim(),
+        method: data.get("method"),
+        independently_checked: true,
+        reason: data.get("reason").trim(),
+      });
+      return "Conflicting records retired. Inspect the replacement for fresh verification and permissions.";
     },
   );
 }

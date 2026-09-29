@@ -36,6 +36,7 @@ jobs:
       - run: python examples/poisoning.py
       - run: python examples/procurement.py
       - run: python examples/context_review.py
+      - run: python examples/conflict_resolution.py
       - run: python -m recallguard.evaluation --output evaluation-output/lexical.json --markdown evaluation-output/lexical.md
       - run: python -m recallguard.evaluation --dataset src/recallguard/evaluation/hardening.json --output evaluation-output/hardening-lexical.json --markdown evaluation-output/hardening-lexical.md
       - uses: actions/upload-artifact@v4

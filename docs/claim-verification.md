@@ -18,7 +18,7 @@ Unverified claims may remain available for informational use. Retrieval marks th
 ## Record a check
 
 1. Independently check the claim using an official record, a callback through independently obtained contact details, or an in-person check. Retain an appropriate document/page/log reference.
-2. Register that evidence source with the existing reviewer-only `POST /sources` endpoint. Its identity and locator must differ from every declared origin of the target memory. The app also rejects simple locator aliases after case-folding and removing trailing slashes.
+2. Register that evidence source with the existing reviewer-only `POST /sources` endpoint. Its identity and locator must differ from every declared origin of the target memory. For a conflict replacement or its descendants, retired origins from resolution history are also excluded. The app also rejects simple locator aliases after case-folding and removing trailing slashes.
 3. Open the memory in the dashboard and choose **Record independent verification**. Select the source and method, enter the reference, reason and expiry, then confirm the independent check. The form shows the exact structured claim, source details and current request fingerprint.
 4. Issue a separate action grant. For procurement, create a payment proposal and approve its exact terms separately.
 
@@ -71,3 +71,5 @@ Evidence references are recorded strings, not stored copies or cryptographic pro
 Only explicit structured claims trigger this requirement. Arbitrary prose is not semantically extracted or validated. The bundled payment adapter requires an exact structured account claim and derives its action arguments from stored records; other tool adapters need equivalent checks. A caller lying about lineage, a dishonest reviewer, a compromised evidence source, and real-world bank account authentication remain outside this mechanism.
 
 Tests cover source/locator reuse, inherited origins, missing verification, exact grant bindings, expiry, withdrawal, replay protection, duplicate issuance, informational-review separation, stale payment approval, API roles, dashboard confirmation, and Neo4j reconnection. `examples/procurement.py` models explicit synthetic verification; it does not perform a real independent check or payment.
+
+Conflict recovery is documented in [conflict resolution](conflict-resolution.md). A resolution creates a new assertion; it does not automatically verify it or transfer any permission. v0.9 changes the verification policy, invalidating older attestations and dependent grants/proposals until fresh checks and approvals are recorded.

@@ -5,6 +5,7 @@ import json
 from collections.abc import Callable
 from pathlib import Path
 
+from recallguard.conflicts import evidence_origins
 from recallguard.models import ClaimVerification, Memory, Source, now
 from recallguard.store import State
 
@@ -13,6 +14,7 @@ POLICY_FINGERPRINT = hashlib.sha256(
     Path(__file__).read_bytes()
     + Path(__file__).with_name("engine.py").read_bytes()
     + Path(__file__).with_name("screening.py").read_bytes()
+    + Path(__file__).with_name("conflicts.py").read_bytes()
 ).hexdigest()
 
 
@@ -51,10 +53,11 @@ def verification_blockers(
         reasons.append("evidence_source_missing")
     else:
         # This rejects obvious reuse, not undisclosed mirrors or colluding sources.
-        origins = [state.sources.get(sid) for sid in memory.origin_ids]
+        origin_ids = evidence_origins(state, [memory.id])
+        origins = [state.sources.get(sid) for sid in origin_ids]
         if any(origin is None for origin in origins):
             reasons.append("origin_source_missing")
-        if source_id in memory.origin_ids or any(
+        if source_id in origin_ids or any(
             origin
             and origin.locator.casefold().rstrip("/") == source.locator.casefold().rstrip("/")
             for origin in origins
